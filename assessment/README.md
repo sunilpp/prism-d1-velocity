@@ -131,10 +131,19 @@ assessment/
 
 ## Sample Reports
 
-See `reports/sample-reports/` for realistic assessment examples:
+See `reports/sample-reports/` for realistic assessment examples. Each has JSON data, rendered HTML, and a print-ready PDF.
 
-| Sample | Company | Level | Verdict | Track |
-|--------|---------|-------|---------|-------|
-| [L1.5](reports/sample-reports/sample-l1.5-startup.json) | NovaPay (Series A, 6 eng) | L1.5 | NEEDS_FOUNDATIONS | A |
-| [L2.5](reports/sample-reports/sample-l2.5-startup.json) | Arcline Health (Series B, 14 eng) | L2.5 | READY_FOR_PILOT | B |
-| [L3.5](reports/sample-reports/sample-l3.5-startup.json) | Vectrix AI (Series C, 28 eng) | L3.5 | READY_FOR_PILOT | C |
+| Sample | Company | Level | Verdict | Track | PDF Report |
+|--------|---------|-------|---------|-------|------------|
+| [L1.5](reports/sample-reports/sample-l1.5-startup.json) | NovaPay (Series A, 6 eng) | L1.5 | NEEDS_FOUNDATIONS | A | [PDF](reports/sample-reports/pdf/novapay-l1.5-assessment.pdf) \| [HTML](reports/sample-reports/pdf/novapay-l1.5-assessment.html) |
+| [L2.5](reports/sample-reports/sample-l2.5-startup.json) | Arcline Health (Series B, 14 eng) | L2.5 | READY_FOR_PILOT | B | [PDF](reports/sample-reports/pdf/arcline-health-l2.5-assessment.pdf) \| [HTML](reports/sample-reports/pdf/arcline-health-l2.5-assessment.html) |
+| [L3.5](reports/sample-reports/sample-l3.5-startup.json) | Vectrix AI (Series C, 28 eng) | L3.5 | READY_FOR_PILOT | C | [PDF](reports/sample-reports/pdf/vectrix-ai-l3.5-assessment.pdf) \| [HTML](reports/sample-reports/pdf/vectrix-ai-l3.5-assessment.html) |
+
+### Regenerating PDFs
+
+```bash
+cd assessment/reports
+python3 generate-pdfs.py
+```
+
+Requires Google Chrome installed. PDFs are generated via Chrome headless with print-ready CSS.
