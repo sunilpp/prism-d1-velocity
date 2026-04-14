@@ -1,10 +1,4 @@
 import {
-  TimestreamWriteClient,
-  WriteRecordsCommand,
-  RejectedRecordsException,
-  MeasureValueType,
-} from '@aws-sdk/client-timestream-write';
-import {
   DynamoDBClient,
   PutItemCommand,
 } from '@aws-sdk/client-dynamodb';
@@ -58,12 +52,10 @@ interface EventBridgeEvent {
 
 // ---- Clients (reused across invocations) ----
 
-const timestreamClient = new TimestreamWriteClient({});
 const dynamoClient = new DynamoDBClient({});
 const cloudwatchClient = new CloudWatchClient({});
 
-const TIMESTREAM_DB = process.env.TIMESTREAM_DATABASE!;
-const TIMESTREAM_TABLE = process.env.TIMESTREAM_TABLE!;
+const EVENTS_TABLE = process.env.EVENTS_TABLE!;
 const METADATA_TABLE = process.env.METADATA_TABLE!;
 const METRIC_NAMESPACE = process.env.METRIC_NAMESPACE ?? 'PRISM/D1/Velocity';
 
@@ -80,10 +72,8 @@ export async function handler(event: EventBridgeEvent): Promise<void> {
     throw new Error('Event missing required fields');
   }
 
-  const eventTimeMs = new Date(detail.timestamp).getTime().toString();
-
   await Promise.all([
-    writeToTimestream(detailType, detail, eventTimeMs),
+    writeEventToDynamo(detailType, detail),
     writeMetadataToDynamo(detailType, detail),
     publishCloudWatchMetrics(detailType, detail),
   ]);
@@ -91,93 +81,45 @@ export async function handler(event: EventBridgeEvent): Promise<void> {
   console.log(`Successfully processed ${detailType} for ${detail.team_id}/${detail.repo}`);
 }
 
-// ---- Timestream ----
+// ---- DynamoDB events ----
 
-async function writeToTimestream(
+async function writeEventToDynamo(
   detailType: string,
   detail: MetricDetail,
-  timeMs: string,
 ): Promise<void> {
-  const dimensions = [
-    { Name: 'team_id', Value: detail.team_id },
-    { Name: 'repo', Value: detail.repo },
-    { Name: 'detail_type', Value: detailType },
-    { Name: 'prism_level', Value: detail.prism_level ?? '1' },
-  ];
+  const ttl = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60; // 365 days from now
 
-  if (detail.ai_context?.tool) {
-    dimensions.push({ Name: 'ai_tool', Value: detail.ai_context.tool });
+  const data: Record<string, unknown> = {
+    team_id: detail.team_id,
+    repo: detail.repo,
+    prism_level: detail.prism_level ?? '1',
+  };
+
+  if (detail.metric) {
+    data.metric = detail.metric;
   }
-  if (detail.ai_context?.origin) {
-    dimensions.push({ Name: 'ai_origin', Value: detail.ai_context.origin });
+  if (detail.ai_context) {
+    data.ai_context = detail.ai_context;
   }
-
-  // Build multi-measure values from all available numeric fields
-  const measureValues: Array<{ Name: string; Value: string; Type: MeasureValueType }> = [];
-
-  // Primary metric
-  if (detail.metric?.value != null) {
-    measureValues.push({
-      Name: detail.metric.name ?? 'value',
-      Value: detail.metric.value.toString(),
-      Type: MeasureValueType.DOUBLE,
-    });
-  }
-
-  // DORA metrics
   if (detail.dora) {
-    for (const [key, val] of Object.entries(detail.dora)) {
-      if (val != null) {
-        measureValues.push({
-          Name: `dora_${key}`,
-          Value: val.toString(),
-          Type: MeasureValueType.DOUBLE,
-        });
-      }
-    }
+    data.dora = detail.dora;
   }
-
-  // AI-DORA metrics
   if (detail.ai_dora) {
-    for (const [key, val] of Object.entries(detail.ai_dora)) {
-      if (val != null) {
-        measureValues.push({
-          Name: `ai_dora_${key}`,
-          Value: val.toString(),
-          Type: MeasureValueType.DOUBLE,
-        });
-      }
-    }
+    data.ai_dora = detail.ai_dora;
   }
 
-  if (measureValues.length === 0) {
-    console.warn('No numeric measures to write to Timestream, skipping.');
-    return;
-  }
-
-  try {
-    await timestreamClient.send(
-      new WriteRecordsCommand({
-        DatabaseName: TIMESTREAM_DB,
-        TableName: TIMESTREAM_TABLE,
-        Records: [
-          {
-            Dimensions: dimensions,
-            MeasureName: detailType,
-            MeasureValueType: MeasureValueType.MULTI,
-            MeasureValues: measureValues,
-            Time: timeMs,
-            TimeUnit: 'MILLISECONDS',
-          },
-        ],
-      }),
-    );
-  } catch (err) {
-    if (err instanceof RejectedRecordsException) {
-      console.error('Timestream rejected records:', JSON.stringify(err.RejectedRecords));
-    }
-    throw err;
-  }
+  await dynamoClient.send(
+    new PutItemCommand({
+      TableName: EVENTS_TABLE,
+      Item: {
+        pk: { S: `${detail.team_id}#${detail.repo}` },
+        sk: { S: detail.timestamp },
+        detail_type: { S: detailType },
+        data: { S: JSON.stringify(data) },
+        ttl: { N: ttl.toString() },
+      },
+    }),
+  );
 }
 
 // ---- DynamoDB metadata ----

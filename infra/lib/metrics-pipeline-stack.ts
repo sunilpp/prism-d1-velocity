@@ -4,15 +4,13 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as timestream from 'aws-cdk-lib/aws-timestream';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as path from 'path';
 import { Construct } from 'constructs';
 
 export class MetricsPipelineStack extends cdk.Stack {
   public readonly eventBus: events.EventBus;
-  public readonly timestreamDatabase: timestream.CfnDatabase;
-  public readonly timestreamTable: timestream.CfnTable;
+  public readonly eventsTable: dynamodb.Table;
   public readonly metadataTable: dynamodb.Table;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -26,24 +24,24 @@ export class MetricsPipelineStack extends cdk.Stack {
     });
 
     // -------------------------------------------------------
-    // Timestream database + table
+    // DynamoDB events table (replaces Timestream)
     // -------------------------------------------------------
-    this.timestreamDatabase = new timestream.CfnDatabase(this, 'MetricsTimestreamDb', {
-      databaseName: 'prism_metrics',
+    this.eventsTable = new dynamodb.Table(this, 'EventsTable', {
+      tableName: 'prism-d1-events',
+      partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'sk', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      pointInTimeRecovery: true,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      timeToLiveAttribute: 'ttl',
     });
 
-    this.timestreamTable = new timestream.CfnTable(this, 'AiDoraEventsTable', {
-      databaseName: this.timestreamDatabase.databaseName!,
-      tableName: 'ai_dora_events',
-      retentionProperties: {
-        MemoryStoreRetentionPeriodInHours: '24',
-        MagneticStoreRetentionPeriodInDays: '365',
-      },
-      magneticStoreWriteProperties: {
-        EnableMagneticStoreWrites: true,
-      },
+    this.eventsTable.addGlobalSecondaryIndex({
+      indexName: 'by-detail-type',
+      partitionKey: { name: 'detail_type', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'sk', type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL,
     });
-    this.timestreamTable.addDependency(this.timestreamDatabase);
 
     // -------------------------------------------------------
     // DynamoDB metadata table
@@ -71,7 +69,7 @@ export class MetricsPipelineStack extends cdk.Stack {
             'bash', '-c',
             [
               'npm init -y > /dev/null 2>&1',
-              'npm install --save @aws-sdk/client-timestream-write @aws-sdk/client-dynamodb @aws-sdk/client-cloudwatch esbuild > /dev/null 2>&1',
+              'npm install --save @aws-sdk/client-dynamodb @aws-sdk/client-cloudwatch esbuild > /dev/null 2>&1',
               'npx esbuild metrics-processor.ts --bundle --platform=node --target=node20 --outfile=/asset-output/metrics-processor.js --external:@aws-sdk/*',
             ].join(' && '),
           ],
@@ -95,37 +93,18 @@ export class MetricsPipelineStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
       environment: {
-        TIMESTREAM_DATABASE: this.timestreamDatabase.databaseName!,
-        TIMESTREAM_TABLE: this.timestreamTable.tableName!,
+        EVENTS_TABLE: this.eventsTable.tableName,
         METADATA_TABLE: this.metadataTable.tableName,
         METRIC_NAMESPACE: 'PRISM/D1/Velocity',
       },
       logRetention: logs.RetentionDays.ONE_MONTH,
-      description: 'Processes PRISM D1 metric events from EventBridge into Timestream, DynamoDB, and CloudWatch',
+      description: 'Processes PRISM D1 metric events from EventBridge into DynamoDB and CloudWatch',
     });
 
     // -------------------------------------------------------
     // IAM permissions for the processor
     // -------------------------------------------------------
-    metricsProcessor.addToRolePolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: [
-          'timestream:WriteRecords',
-          'timestream:DescribeEndpoints',
-        ],
-        resources: ['*'],
-      }),
-    );
-
-    metricsProcessor.addToRolePolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ['timestream:DescribeEndpoints'],
-        resources: ['*'],
-      }),
-    );
-
+    this.eventsTable.grantWriteData(metricsProcessor);
     this.metadataTable.grantWriteData(metricsProcessor);
 
     metricsProcessor.addToRolePolicy(
@@ -176,9 +155,9 @@ export class MetricsPipelineStack extends cdk.Stack {
       exportName: 'PrismD1EventBusArn',
     });
 
-    new cdk.CfnOutput(this, 'TimestreamDatabaseName', {
-      value: this.timestreamDatabase.databaseName!,
-      exportName: 'PrismD1TimestreamDb',
+    new cdk.CfnOutput(this, 'EventsTableName', {
+      value: this.eventsTable.tableName,
+      exportName: 'PrismD1EventsTable',
     });
 
     new cdk.CfnOutput(this, 'MetadataTableName', {

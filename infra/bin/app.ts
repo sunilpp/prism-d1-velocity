@@ -14,7 +14,7 @@ const env: cdk.Environment = {
 
 const pipelineStack = new MetricsPipelineStack(app, 'PrismD1MetricsPipeline', {
   env,
-  description: 'PRISM D1 Velocity - Core metrics event pipeline (EventBridge, Timestream, DynamoDB)',
+  description: 'PRISM D1 Velocity - Core metrics event pipeline (EventBridge, DynamoDB)',
   tags: {
     Project: 'PRISM',
     Domain: 'D1-Velocity',
@@ -26,8 +26,7 @@ const apiStack = new ApiStack(app, 'PrismD1Api', {
   env,
   description: 'PRISM D1 Velocity - Metric ingestion and query API',
   eventBus: pipelineStack.eventBus,
-  timestreamDatabase: pipelineStack.timestreamDatabase,
-  timestreamTable: pipelineStack.timestreamTable,
+  eventsTable: pipelineStack.eventsTable,
   metadataTable: pipelineStack.metadataTable,
   tags: {
     Project: 'PRISM',

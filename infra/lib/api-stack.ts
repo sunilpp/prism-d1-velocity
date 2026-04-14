@@ -5,14 +5,12 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import * as timestream from 'aws-cdk-lib/aws-timestream';
 import * as path from 'path';
 import { Construct } from 'constructs';
 
 export interface ApiStackProps extends cdk.StackProps {
   eventBus: events.EventBus;
-  timestreamDatabase: timestream.CfnDatabase;
-  timestreamTable: timestream.CfnTable;
+  eventsTable: dynamodb.Table;
   metadataTable: dynamodb.Table;
 }
 
@@ -36,7 +34,7 @@ export class ApiStack extends cdk.Stack {
             'bash', '-c',
             [
               'npm init -y > /dev/null 2>&1',
-              'npm install --save @aws-sdk/client-eventbridge @aws-sdk/client-timestream-query @aws-sdk/client-dynamodb esbuild > /dev/null 2>&1',
+              'npm install --save @aws-sdk/client-eventbridge @aws-sdk/client-dynamodb esbuild > /dev/null 2>&1',
               'npx esbuild api-handler.ts --bundle --platform=node --target=node20 --outfile=/asset-output/api-handler.js --external:@aws-sdk/*',
             ].join(' && '),
           ],

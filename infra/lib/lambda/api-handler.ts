@@ -3,12 +3,9 @@ import {
   PutEventsCommand,
 } from '@aws-sdk/client-eventbridge';
 import {
-  TimestreamQueryClient,
-  QueryCommand,
-} from '@aws-sdk/client-timestream-query';
-import {
   DynamoDBClient,
   PutItemCommand,
+  QueryCommand,
 } from '@aws-sdk/client-dynamodb';
 
 // ---- Types ----
@@ -49,12 +46,10 @@ interface MetricPayload {
 // ---- Clients ----
 
 const eventBridgeClient = new EventBridgeClient({});
-const timestreamQueryClient = new TimestreamQueryClient({});
 const dynamoClient = new DynamoDBClient({});
 
 const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME!;
-const TIMESTREAM_DB = process.env.TIMESTREAM_DATABASE!;
-const TIMESTREAM_TABLE = process.env.TIMESTREAM_TABLE!;
+const EVENTS_TABLE = process.env.EVENTS_TABLE!;
 const METADATA_TABLE = process.env.METADATA_TABLE!;
 
 const CORS_HEADERS: Record<string, string> = {
@@ -209,36 +204,117 @@ async function handleGetMetrics(event: ApiGatewayEvent): Promise<ApiGatewayRespo
   const hours = parseInt(event.queryStringParameters?.hours ?? '168', 10); // default 7 days
   const detailType = event.queryStringParameters?.detail_type;
 
-  let whereClause = `WHERE team_id = '${escapeTimestreamValue(teamId)}'`;
-  if (repo) {
-    whereClause += ` AND repo = '${escapeTimestreamValue(repo)}'`;
-  }
-  if (detailType) {
-    whereClause += ` AND detail_type = '${escapeTimestreamValue(detailType)}'`;
-  }
-  whereClause += ` AND time >= ago(${hours}h)`;
-
-  const query = `
-    SELECT *
-    FROM "${TIMESTREAM_DB}"."${TIMESTREAM_TABLE}"
-    ${whereClause}
-    ORDER BY time DESC
-    LIMIT 1000
-  `;
+  const startTime = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+  const endTime = new Date().toISOString();
 
   try {
-    const result = await timestreamQueryClient.send(
-      new QueryCommand({ QueryString: query }),
-    );
+    let rows: Record<string, string | null>[];
 
-    const columns = result.ColumnInfo?.map((c) => c.Name ?? '') ?? [];
-    const rows = (result.Rows ?? []).map((row) => {
-      const record: Record<string, string | null> = {};
-      row.Data?.forEach((datum, idx) => {
-        record[columns[idx]] = datum.ScalarValue ?? null;
-      });
-      return record;
-    });
+    if (detailType && !repo) {
+      // Query by detail_type using GSI, then filter by team_id client-side
+      const result = await dynamoClient.send(
+        new QueryCommand({
+          TableName: EVENTS_TABLE,
+          IndexName: 'by-detail-type',
+          KeyConditionExpression: 'detail_type = :dt AND sk BETWEEN :start AND :end',
+          FilterExpression: 'begins_with(pk, :teamPrefix)',
+          ExpressionAttributeValues: {
+            ':dt': { S: detailType },
+            ':start': { S: startTime },
+            ':end': { S: endTime },
+            ':teamPrefix': { S: `${teamId}#` },
+          },
+          Limit: 1000,
+          ScanIndexForward: false,
+        }),
+      );
+
+      rows = (result.Items ?? []).map(mapDynamoItem);
+    } else {
+      // Query by pk (team_id#repo) using main table
+      const pk = repo ? `${teamId}#${repo}` : undefined;
+
+      if (pk) {
+        const result = await dynamoClient.send(
+          new QueryCommand({
+            TableName: EVENTS_TABLE,
+            KeyConditionExpression: 'pk = :pk AND sk BETWEEN :start AND :end',
+            ExpressionAttributeValues: {
+              ':pk': { S: pk },
+              ':start': { S: startTime },
+              ':end': { S: endTime },
+              ...(detailType ? { ':dt': { S: detailType } } : {}),
+            },
+            ...(detailType ? { FilterExpression: 'detail_type = :dt' } : {}),
+            Limit: 1000,
+            ScanIndexForward: false,
+          }),
+        );
+
+        rows = (result.Items ?? []).map(mapDynamoItem);
+      } else {
+        // No repo specified — query GSI by detail_type if provided, otherwise
+        // we need to scan with team prefix filter. For efficiency, use a
+        // begins_with filter on the main table by doing a query per common
+        // detail type or just filter. Here we use the GSI with a broad approach.
+        // Since we don't have a pk, query all detail types for this team.
+        const result = await dynamoClient.send(
+          new QueryCommand({
+            TableName: EVENTS_TABLE,
+            IndexName: 'by-detail-type',
+            KeyConditionExpression: 'detail_type = :dt AND sk BETWEEN :start AND :end',
+            FilterExpression: 'begins_with(pk, :teamPrefix)',
+            ExpressionAttributeValues: {
+              ':dt': { S: 'prism.d1.commit' },
+              ':start': { S: startTime },
+              ':end': { S: endTime },
+              ':teamPrefix': { S: `${teamId}#` },
+            },
+            Limit: 1000,
+            ScanIndexForward: false,
+          }),
+        );
+
+        // Query all detail types in parallel
+        const detailTypes = [
+          'prism.d1.pr',
+          'prism.d1.deploy',
+          'prism.d1.eval',
+          'prism.d1.incident',
+          'prism.d1.assessment',
+        ];
+
+        const additionalResults = await Promise.all(
+          detailTypes.map((dt) =>
+            dynamoClient.send(
+              new QueryCommand({
+                TableName: EVENTS_TABLE,
+                IndexName: 'by-detail-type',
+                KeyConditionExpression: 'detail_type = :dt AND sk BETWEEN :start AND :end',
+                FilterExpression: 'begins_with(pk, :teamPrefix)',
+                ExpressionAttributeValues: {
+                  ':dt': { S: dt },
+                  ':start': { S: startTime },
+                  ':end': { S: endTime },
+                  ':teamPrefix': { S: `${teamId}#` },
+                },
+                Limit: 1000,
+                ScanIndexForward: false,
+              }),
+            ),
+          ),
+        );
+
+        const allItems = [
+          ...(result.Items ?? []),
+          ...additionalResults.flatMap((r) => r.Items ?? []),
+        ];
+
+        // Sort by sk descending and limit to 1000
+        allItems.sort((a, b) => (b.sk?.S ?? '').localeCompare(a.sk?.S ?? ''));
+        rows = allItems.slice(0, 1000).map(mapDynamoItem);
+      }
+    }
 
     return respond(200, {
       team_id: teamId,
@@ -247,9 +323,17 @@ async function handleGetMetrics(event: ApiGatewayEvent): Promise<ApiGatewayRespo
       records: rows,
     });
   } catch (err) {
-    console.error('Timestream query error:', err);
+    console.error('DynamoDB query error:', err);
     return respond(500, { error: 'Query Failed', message: (err as Error).message });
   }
+}
+
+function mapDynamoItem(item: Record<string, { S?: string; N?: string }>): Record<string, string | null> {
+  const record: Record<string, string | null> = {};
+  for (const [key, value] of Object.entries(item)) {
+    record[key] = value.S ?? value.N ?? null;
+  }
+  return record;
 }
 
 // ---- Helpers ----
@@ -257,10 +341,6 @@ async function handleGetMetrics(event: ApiGatewayEvent): Promise<ApiGatewayRespo
 function extractTeamIdFromPath(path: string): string | undefined {
   const match = path.match(/^\/metrics\/([^/]+)$/);
   return match?.[1] ? decodeURIComponent(match[1]) : undefined;
-}
-
-function escapeTimestreamValue(value: string): string {
-  return value.replace(/'/g, "''");
 }
 
 function validateMetricPayload(payload: MetricPayload): string | null {
