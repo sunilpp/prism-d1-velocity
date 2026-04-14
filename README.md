@@ -101,7 +101,8 @@ Bedrock Evals ────┘                      │
                                          │
                                 ┌────────┼────────┐
                                 ▼        ▼        ▼
-                           Timestream DynamoDB CloudWatch
+                            DynamoDB  DynamoDB CloudWatch
+                            (events) (metadata)   │
                                 │        │        │
                                 └────────┼────────┘
                                          ▼

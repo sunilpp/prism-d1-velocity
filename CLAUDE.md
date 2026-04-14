@@ -13,7 +13,7 @@ It provides a workshop-style GitHub repo with bootstrapper code for AI-native so
 
 - **Claude Code is the primary driver** — all AI-assisted development flows through Claude Code pointing to Bedrock
 - **Metadata-first** — every AI-assisted action emits structured events to the metrics pipeline
-- **AWS-native only** — no third-party observability dependencies (CloudWatch, QuickSight, Timestream, EventBridge)
+- **AWS-native only** — no third-party observability dependencies (CloudWatch, QuickSight, DynamoDB, EventBridge)
 - **Spec-driven development** — all features start with a Kiro-compatible spec before implementation
 - **Enhanced DORA metrics** — traditional DORA + AI-native dimensions (acceptance rate, AI-to-merge ratio, eval gate pass rate)
 
@@ -98,8 +98,7 @@ All events follow this structure:
 | Amazon Bedrock | LLM inference (Claude via Bedrock), Evaluations, Guardrails |
 | EventBridge | Metric event bus |
 | Lambda | Event processing, enrichment, normalization |
-| Timestream | Time-series metric storage |
-| DynamoDB | Team metadata, PRISM assessment scores |
+| DynamoDB | Raw event storage (`prism-d1-events` table), team metadata, PRISM assessment scores |
 | API Gateway | Metric ingestion endpoint |
 | CloudWatch | Team-level dashboards, alarms |
 | QuickSight | Executive readout dashboards (Jellyfish/Swarmia-like) |

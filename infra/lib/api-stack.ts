@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
@@ -58,8 +57,7 @@ export class ApiStack extends cdk.Stack {
       memorySize: 256,
       environment: {
         EVENT_BUS_NAME: props.eventBus.eventBusName,
-        TIMESTREAM_DATABASE: props.timestreamDatabase.databaseName!,
-        TIMESTREAM_TABLE: props.timestreamTable.tableName!,
+        EVENTS_TABLE: props.eventsTable.tableName,
         METADATA_TABLE: props.metadataTable.tableName,
       },
       logRetention: logs.RetentionDays.ONE_MONTH,
@@ -70,19 +68,8 @@ export class ApiStack extends cdk.Stack {
     // IAM permissions
     // -------------------------------------------------------
     props.eventBus.grantPutEventsTo(apiHandler);
+    props.eventsTable.grantReadData(apiHandler);
     props.metadataTable.grantReadWriteData(apiHandler);
-
-    apiHandler.addToRolePolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: [
-          'timestream:Select',
-          'timestream:DescribeEndpoints',
-          'timestream:DescribeTable',
-        ],
-        resources: ['*'],
-      }),
-    );
 
     // -------------------------------------------------------
     // API Gateway REST API
