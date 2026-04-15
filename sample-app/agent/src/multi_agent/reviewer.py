@@ -6,7 +6,9 @@ then reports whether the outcome is correct.
 """
 
 from strands import Agent
+from strands.models.bedrock import BedrockModel
 
+from ..task_assistant.mock_model import MockModel
 from ..task_assistant.tools import list_tasks
 
 REVIEWER_PROMPT = """You are a quality reviewer for task management operations.
@@ -45,8 +47,11 @@ def create_reviewer(mock: bool = False) -> Agent:
         "tools": [list_tasks],
     }
     if mock:
-        kwargs["model"] = "mock"
+        kwargs["model"] = MockModel()
     else:
         # Use Haiku for the reviewer — fast and cheap
-        kwargs["model"] = "bedrock/anthropic.claude-haiku-4-5-20251001"
+        kwargs["model"] = BedrockModel(
+            model_id="anthropic.claude-haiku-4-5-20251001",
+            region_name="us-west-2",
+        )
     return Agent(**kwargs)

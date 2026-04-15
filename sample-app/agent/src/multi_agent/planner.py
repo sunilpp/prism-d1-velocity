@@ -5,6 +5,9 @@ and produces a structured plan that the executor will follow.
 """
 
 from strands import Agent
+from strands.models.bedrock import BedrockModel
+
+from ..task_assistant.mock_model import MockModel
 
 PLANNER_PROMPT = """You are a task planning specialist. Your job is to break down complex
 task management requests into a sequence of concrete steps.
@@ -34,7 +37,10 @@ def create_planner(mock: bool = False) -> Agent:
     """Create the planner agent (reasoning only, no tools)."""
     kwargs = {"system_prompt": PLANNER_PROMPT}
     if mock:
-        kwargs["model"] = "mock"
+        kwargs["model"] = MockModel()
     else:
-        kwargs["model"] = "bedrock/anthropic.claude-sonnet-4-20250514"
+        kwargs["model"] = BedrockModel(
+            model_id="anthropic.claude-sonnet-4-20250514",
+            region_name="us-west-2",
+        )
     return Agent(**kwargs)

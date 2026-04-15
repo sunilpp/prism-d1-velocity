@@ -11,8 +11,10 @@ Usage:
 """
 
 from strands import Agent
+from strands.models.bedrock import BedrockModel
 
 from .config import AgentConfig, SYSTEM_PROMPT
+from .mock_model import MockModel
 from .metrics import AgentMetrics
 from .tools import (
     list_tasks,
@@ -50,12 +52,15 @@ def create_agent(
     }
 
     if mock:
-        # Mock mode — no AWS credentials needed, uses echo responses
-        # Useful for testing and offline workshops
-        agent_kwargs["model"] = "mock"
+        # Mock mode — no AWS credentials needed
+        # Uses pattern-matched responses to demonstrate tool flow
+        agent_kwargs["model"] = MockModel()
     else:
         # Production mode — use Bedrock
-        agent_kwargs["model"] = f"bedrock/{config.model_id}"
+        agent_kwargs["model"] = BedrockModel(
+            model_id=config.model_id,
+            region_name=config.aws_region,
+        )
 
     agent = Agent(**agent_kwargs)
     return agent

@@ -21,7 +21,7 @@ class AgentConfig:
 
     # Model
     model_id: str = "anthropic.claude-sonnet-4-20250514"
-    aws_region: str = "us-east-1"
+    aws_region: str = "us-west-2"
 
     # Agent identity
     agent_name: str = "task-assistant"
