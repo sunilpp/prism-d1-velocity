@@ -51,7 +51,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq jq bc
-          pip install --quiet strands-agents strands-agents-tools
+          pip install --quiet strands-agents strands-agents-tools-mcp requests
 
       - name: Identify agent changes
         id: detect-agent
@@ -196,7 +196,7 @@ jobs:
             | Error Recovery | ${errorRecovery} | 0.15 |
 
             > Threshold: 0.82 | Rubric: agent-quality.json | Evaluated by Amazon Bedrock
-            > [PRISM D1 Velocity](https://github.com/your-org/prism-d1-velocity)`;
+            > [PRISM D1 Velocity](${{ github.server_url }}/${{ github.repository }})`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,

@@ -42,6 +42,15 @@ interface MetricDetail {
   ai_context?: AiContext;
   dora?: DoraMetrics;
   ai_dora?: AiDoraMetrics;
+  agent?: {
+    agent_name: string;
+    steps_taken: number;
+    tools_invoked: number;
+    duration_ms: number;
+    tokens_used: number;
+    status: string;
+    guardrails_triggered: number;
+  };
 }
 
 interface EventBridgeEvent {
@@ -309,8 +318,8 @@ async function publishCloudWatchMetrics(
   }
 
   // Agent metrics
-  if ((detail as any).agent) {
-    const agent = (detail as any).agent;
+  if (detail.agent) {
+    const agent = detail.agent;
     const agentDimensions = [
       ...sharedDimensions,
       { Name: 'AgentName', Value: agent.agent_name ?? 'unknown' },
@@ -328,11 +337,20 @@ async function publishCloudWatchMetrics(
 
     for (const [name, value, unit] of agentMetrics) {
       if (value != null) {
+        // Publish with AgentName dimension (for per-agent drill-down)
         metricData.push({
           MetricName: name,
           Value: value,
           Unit: unit,
           Dimensions: agentDimensions,
+          Timestamp: new Date(detail.timestamp),
+        });
+        // Also publish without AgentName (for aggregate dashboard queries)
+        metricData.push({
+          MetricName: name,
+          Value: value,
+          Unit: unit,
+          Dimensions: sharedDimensions,
           Timestamp: new Date(detail.timestamp),
         });
       }

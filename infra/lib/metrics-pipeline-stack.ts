@@ -131,6 +131,7 @@ export class MetricsPipelineStack extends cdk.Stack {
       'prism.d1.incident',
       'prism.d1.assessment',
       'prism.d1.agent',
+      'prism.d1.agent.eval',
     ];
 
     for (const detailType of detailTypes) {
