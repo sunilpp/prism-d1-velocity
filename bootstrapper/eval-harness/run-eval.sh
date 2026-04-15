@@ -234,6 +234,18 @@ if [[ "${EMIT_TO_EB}" == "true" ]]; then
         PRISM_LEVEL=$(jq -r '.prism_level // 2' .prism/config.json)
     fi
 
+    # Extract criterion-level scores from eval result for EventBridge
+    CRITERION_SCORES=$(echo "${EVAL_RESULT}" | jq -c '
+      if .criteria then
+        [.criteria | to_entries[] | {
+          name: .key,
+          score: (.value.score // .value.rating // 0),
+          max_score: (.value.max_score // 5),
+          reasoning: (.value.reasoning // .value.rationale // "" | .[0:200])
+        }]
+      else [] end
+    ' 2>/dev/null || echo "[]")
+
     EB_EVENT=$(jq -n \
         --arg team_id "${TEAM_ID}" \
         --arg repo "${REPO}" \
@@ -243,6 +255,9 @@ if [[ "${EMIT_TO_EB}" == "true" ]]; then
         --arg rubric "${RUBRIC_NAME}" \
         --arg result "${RESULT}" \
         --arg eval_model "${EVAL_MODEL_ID}" \
+        --arg eval_id "${EVAL_ID}" \
+        --arg input_file "${INPUT_FILE}" \
+        --argjson criterion_scores "${CRITERION_SCORES}" \
         '{
             "team_id": $team_id,
             "repo": $repo,
@@ -259,9 +274,12 @@ if [[ "${EMIT_TO_EB}" == "true" ]]; then
                 "origin": "ai-generated"
             },
             "eval": {
+                "eval_id": $eval_id,
                 "rubric": $rubric,
                 "result": $result,
-                "score": $score
+                "score": $score,
+                "input_file": $input_file,
+                "criterion_scores": $criterion_scores
             }
         }')
 
