@@ -1,5 +1,9 @@
 # PRISM D1: Velocity — AI Development Lifecycle Workshop
 
+> :warning: **Sample Project — Not Production-Ready**
+>
+> This project is provided as a sample and reference implementation only. It is not designed, tested, or hardened for production use. Use it as a starting point or learning resource, and perform your own security review, testing, and operational hardening before deploying to any production environment.
+
 > Compress the idea-to-production loop with disciplined AI adoption.
 
 Part of the [PRISM Framework](../README.md) (Progressive Readiness Index for Scalable Maturity) — the D1 Velocity pillar focuses on AI-native software development lifecycle practices that are **measurable from Day 1**.
