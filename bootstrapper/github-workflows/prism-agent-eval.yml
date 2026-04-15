@@ -51,7 +51,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq jq bc
-          pip install --quiet strands-agents strands-agents-tools-mcp requests
+          pip install --quiet strands-agents strands-agents-tools requests
 
       - name: Identify agent changes
         id: detect-agent

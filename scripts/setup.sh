@@ -365,9 +365,37 @@ if [[ -f "$REPO_ROOT/sample-app/package.json" ]]; then
   (cd "$REPO_ROOT/infra" && npm install --silent 2>/dev/null) && pass "infra: npm install" || warn "infra: npm install failed"
 
   if [[ -f "$REPO_ROOT/sample-app/agent/pyproject.toml" ]]; then
-    PIP_CMD="${PYTHON_CMD:-python3} -m pip"
-    info "Installing agent Python dependencies..."
-    (cd "$REPO_ROOT/sample-app/agent" && $PIP_CMD install -e ".[dev]" --quiet 2>/dev/null) && pass "agent: pip install" || warn "agent: pip install failed (run manually: cd sample-app/agent && pip install -e '.[dev]')"
+    AGENT_DIR="$REPO_ROOT/sample-app/agent"
+    VENV_DIR="$AGENT_DIR/.venv"
+    PY="${PYTHON_CMD:-python3}"
+
+    # Create a virtual environment if one doesn't exist
+    if [[ ! -d "$VENV_DIR" ]]; then
+      info "Creating Python virtual environment at agent/.venv ..."
+      "$PY" -m venv "$VENV_DIR" 2>/dev/null || {
+        warn "Failed to create venv — trying with --without-pip"
+        "$PY" -m venv --without-pip "$VENV_DIR" 2>/dev/null || true
+      }
+    fi
+
+    if [[ -f "$VENV_DIR/bin/pip" ]]; then
+      info "Installing agent Python dependencies in .venv ..."
+      ("$VENV_DIR/bin/pip" install -e "$AGENT_DIR[dev]" --quiet 2>&1 | tail -2) && pass "agent: pip install (in .venv)" || warn "agent: pip install failed"
+      info "Activate with: source sample-app/agent/.venv/bin/activate"
+    elif [[ -f "$VENV_DIR/bin/python" ]]; then
+      info "Installing pip into venv..."
+      "$VENV_DIR/bin/python" -m ensurepip --upgrade --default-pip 2>/dev/null || true
+      if [[ -f "$VENV_DIR/bin/pip" ]]; then
+        ("$VENV_DIR/bin/pip" install -e "$AGENT_DIR[dev]" --quiet 2>&1 | tail -2) && pass "agent: pip install (in .venv)" || warn "agent: pip install failed"
+        info "Activate with: source sample-app/agent/.venv/bin/activate"
+      else
+        warn "Could not install pip in venv. Run manually:"
+        info "  cd sample-app/agent && python3 -m venv .venv && source .venv/bin/activate && pip install -e '.[dev]'"
+      fi
+    else
+      warn "Could not create virtual environment. Run manually:"
+      info "  cd sample-app/agent && python3 -m venv .venv && source .venv/bin/activate && pip install -e '.[dev]'"
+    fi
   fi
 else
   info "Not inside the prism-d1-velocity repo — skipping project dependency install"
