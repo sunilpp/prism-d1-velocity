@@ -86,8 +86,11 @@ const RECOMMENDATIONS: Record<string, string[]> = {
     'Define autonomy tiers for agent workflows',
   ],
   'Agent Workflows': [
-    'Define your first agentic workflow with Bedrock Agents',
-    'Set up MCP server for tool registration',
+    'Define your first agentic workflow with Bedrock Agents or Strands SDK',
+    'Set up an MCP server for tool registration (@modelcontextprotocol)',
+    'Deploy agents via AgentCore for managed runtime and scaling',
+    'Add agent test suites and eval rubrics alongside unit tests',
+    'Emit agent invocation metrics to the PRISM event bus (prism.d1.agent.*)',
   ],
   'Platform & Reuse': [
     'Create a shared prompt library for team reuse',
