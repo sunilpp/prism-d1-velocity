@@ -25,11 +25,25 @@ Part of the [PRISM Framework](../README.md) (Progressive Readiness Index for Sca
 
 ### Prerequisites
 
+Run the setup script to install and verify everything automatically:
+
+```bash
+./scripts/setup.sh
+```
+
+Or install manually:
+
 - AWS Account with Bedrock access (Claude models enabled)
 - Node.js 20+ and npm
-- AWS CDK v2 (`npm install -g aws-cdk`)
-- Claude Code CLI installed and configured to use Bedrock
-- Git 2.40+
+- Python 3.11+ (for Strands Agent)
+- AWS CLI v2 and CDK v2 (`npm install -g aws-cdk`)
+- Claude Code CLI configured for Bedrock (`export CLAUDE_CODE_USE_BEDROCK=1`)
+- Git 2.40+, jq, GitHub CLI
+
+The setup script supports flags:
+- `--skip-aws` — skip AWS credential and Bedrock checks (for offline prep)
+- `--skip-kiro` — skip Kiro IDE check
+- `--verify-only` — only verify, don't install anything
 
 ### Deploy the Metrics Platform
 
