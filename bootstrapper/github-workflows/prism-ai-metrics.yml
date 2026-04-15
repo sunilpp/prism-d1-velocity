@@ -81,6 +81,41 @@ jobs:
           echo "lead_time_seconds=${LEAD_TIME_SECONDS}" >> "$GITHUB_OUTPUT"
           echo "lead_time_hours=${LEAD_TIME_HOURS}" >> "$GITHUB_OUTPUT"
 
+      - name: Calculate AI acceptance rate
+        id: acceptance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          REPO="${{ github.repository }}"
+
+          # Get review decisions for this PR
+          REVIEWS=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/reviews" \
+            --jq '[.[] | select(.state == "APPROVED" or .state == "CHANGES_REQUESTED")]' 2>/dev/null || echo "[]")
+
+          APPROVED=$(echo "${REVIEWS}" | jq '[.[] | select(.state == "APPROVED")] | length')
+          CHANGES_REQUESTED=$(echo "${REVIEWS}" | jq '[.[] | select(.state == "CHANGES_REQUESTED")] | length')
+          TOTAL_REVIEWS=$((APPROVED + CHANGES_REQUESTED))
+
+          if [[ "${TOTAL_REVIEWS}" -gt 0 ]]; then
+            ACCEPTANCE_RATE=$(echo "scale=4; ${APPROVED} / ${TOTAL_REVIEWS}" | bc -l)
+          else
+            ACCEPTANCE_RATE="1"  # No reviews = accepted by default
+          fi
+
+          # Only meaningful for AI PRs
+          AI_RATIO="${{ steps.ai-ratio.outputs.ai_ratio }}"
+          if [[ $(echo "${AI_RATIO} > 0" | bc -l) -eq 1 ]]; then
+            AI_ACCEPTANCE_RATE="${ACCEPTANCE_RATE}"
+          else
+            AI_ACCEPTANCE_RATE=""
+          fi
+
+          echo "acceptance_rate=${ACCEPTANCE_RATE}" >> "$GITHUB_OUTPUT"
+          echo "ai_acceptance_rate=${AI_ACCEPTANCE_RATE}" >> "$GITHUB_OUTPUT"
+          echo "approved=${APPROVED}" >> "$GITHUB_OUTPUT"
+          echo "changes_requested=${CHANGES_REQUESTED}" >> "$GITHUB_OUTPUT"
+
       - name: Emit prism.d1.pr event
         run: |
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -100,6 +135,10 @@ jobs:
             --argjson lead_time_hours "${{ steps.lead-time.outputs.lead_time_hours }}" \
             --arg pr_number "${{ github.event.pull_request.number }}" \
             --arg pr_author "${{ github.event.pull_request.user.login }}" \
+            --argjson approved "${{ steps.acceptance.outputs.approved }}" \
+            --argjson changes_requested "${{ steps.acceptance.outputs.changes_requested }}" \
+            --arg acceptance_rate "${{ steps.acceptance.outputs.acceptance_rate }}" \
+            --arg ai_acceptance_rate "${{ steps.acceptance.outputs.ai_acceptance_rate }}" \
             '{
               "team_id": $team_id,
               "repo": $repo,
@@ -113,7 +152,7 @@ jobs:
               "ai_context": {
                 "tool": "github-actions",
                 "model": "n/a",
-                "origin": "ai-assisted"
+                "origin": (if $ai_ratio > 0.5 then "ai-assisted" elif $ai_ratio > 0 then "ai-assisted" else "human" end)
               },
               "dora": {
                 "lead_time_seconds": $lead_time_seconds,
@@ -121,6 +160,7 @@ jobs:
               },
               "ai_dora": {
                 "ai_to_merge_ratio": $ai_ratio,
+                "ai_acceptance_rate": (if $ai_acceptance_rate != "" then ($ai_acceptance_rate | tonumber) else null end),
                 "total_commits": $total_commits,
                 "ai_commits": $ai_commits,
                 "ai_generated_commits": $ai_generated,
@@ -128,7 +168,9 @@ jobs:
               },
               "pr": {
                 "number": ($pr_number | tonumber),
-                "author": $pr_author
+                "author": $pr_author,
+                "reviews_approved": $approved,
+                "reviews_changes_requested": $changes_requested
               }
             }')
 
