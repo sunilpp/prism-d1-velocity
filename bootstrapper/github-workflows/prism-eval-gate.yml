@@ -46,10 +46,15 @@ jobs:
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.sha }}"
 
-          # Get commits with AI-Origin trailers
-          AI_SHAS=$(git log "${BASE_SHA}..${HEAD_SHA}" --format='%H %B' \
-            | grep -B1 'AI-Origin: ai-generated\|AI-Origin: ai-assisted' \
-            | grep '^[a-f0-9]\{40\}' || true)
+          # Get commits with AI-Origin trailers — iterate individually
+          # to avoid multi-line body issues with grep -B1
+          AI_SHAS=""
+          for SHA in $(git rev-list "${BASE_SHA}..${HEAD_SHA}"); do
+            if git log -1 --format='%B' "${SHA}" | grep -q 'AI-Origin: ai-generated\|AI-Origin: ai-assisted'; then
+              AI_SHAS="${AI_SHAS} ${SHA}"
+            fi
+          done
+          AI_SHAS=$(echo "${AI_SHAS}" | xargs)
 
           if [[ -z "${AI_SHAS}" ]]; then
             echo "No AI-generated commits found in this PR."
@@ -89,6 +94,7 @@ jobs:
           PASS_COUNT=0
           FAIL_COUNT=0
           TOTAL_SCORE=0
+          TOTAL_HALLUCINATIONS=0
           RESULTS=""
 
           while IFS= read -r FILE; do
@@ -121,16 +127,13 @@ jobs:
             fi
 
             # Capture failure categories from eval output
-            HALLUCINATIONS=$(echo "${OUTPUT}" | grep -ci 'hallucinated\|hallucination\|does not exist' || true)
-            SPEC_MISMATCH=$(echo "${OUTPUT}" | grep -ci 'spec.*mismatch\|acceptance.*criteria\|contract.*mismatch' || true)
-            ERROR_HANDLING=$(echo "${OUTPUT}" | grep -ci 'error.handling\|missing.*catch\|unhandled' || true)
+            FILE_HALLUCINATIONS=$(echo "${OUTPUT}" | grep -ci 'hallucinated\|hallucination\|does not exist' || true)
+            TOTAL_HALLUCINATIONS=$((TOTAL_HALLUCINATIONS + FILE_HALLUCINATIONS))
 
             RESULTS="${RESULTS}\n| \`${FILE}\` | ${SCORE} | ${RESULT} |"
           done < /tmp/ai-changed-files.txt
 
-          # Aggregate failure categories
-          TOTAL_HALLUCINATIONS=$(echo "${RESULTS}" | grep -c 'hallucinated' 2>/dev/null || echo "0")
-          echo "hallucinations_caught=${HALLUCINATIONS:-0}" >> "$GITHUB_OUTPUT"
+          echo "hallucinations_caught=${TOTAL_HALLUCINATIONS}" >> "$GITHUB_OUTPUT"
 
           TOTAL_FILES=$((PASS_COUNT + FAIL_COUNT))
           if [[ "${TOTAL_FILES}" -gt 0 ]]; then

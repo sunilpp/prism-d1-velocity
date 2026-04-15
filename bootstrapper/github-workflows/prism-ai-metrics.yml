@@ -43,18 +43,28 @@ jobs:
           HEAD_SHA="${{ github.event.pull_request.merge_commit_sha }}"
 
           TOTAL_COMMITS=$(git rev-list --count "${BASE_SHA}..${HEAD_SHA}")
-          AI_COMMITS=$(git log "${BASE_SHA}..${HEAD_SHA}" --format='%B' | grep -c '^AI-Origin: ai-\(generated\|assisted\)' || true)
 
+          # Count AI origin per-commit (not per-line) to avoid overcounting
+          AI_GENERATED=0
+          AI_ASSISTED=0
+          HUMAN_ONLY=0
+          for SHA in $(git rev-list "${BASE_SHA}..${HEAD_SHA}"); do
+            MSG=$(git log -1 --format='%B' "${SHA}")
+            if echo "${MSG}" | grep -q '^AI-Origin: ai-generated'; then
+              AI_GENERATED=$((AI_GENERATED + 1))
+            elif echo "${MSG}" | grep -q '^AI-Origin: ai-assisted'; then
+              AI_ASSISTED=$((AI_ASSISTED + 1))
+            elif echo "${MSG}" | grep -q '^AI-Origin: human'; then
+              HUMAN_ONLY=$((HUMAN_ONLY + 1))
+            fi
+          done
+
+          AI_COMMITS=$((AI_GENERATED + AI_ASSISTED))
           if [[ "${TOTAL_COMMITS}" -gt 0 ]]; then
-            AI_RATIO=$(echo "scale=4; ${AI_COMMITS} / ${TOTAL_COMMITS}" | bc -l)
+            AI_RATIO=$(echo "scale=4; ${AI_COMMITS} / ${TOTAL_COMMITS}" | bc -l | sed 's/^\./0./')
           else
             AI_RATIO="0"
           fi
-
-          # Count by origin type
-          AI_GENERATED=$(git log "${BASE_SHA}..${HEAD_SHA}" --format='%B' | grep -c '^AI-Origin: ai-generated' || true)
-          AI_ASSISTED=$(git log "${BASE_SHA}..${HEAD_SHA}" --format='%B' | grep -c '^AI-Origin: ai-assisted' || true)
-          HUMAN_ONLY=$(git log "${BASE_SHA}..${HEAD_SHA}" --format='%B' | grep -c '^AI-Origin: human' || true)
 
           # Detect tools used
           TOOLS_USED=$(git log "${BASE_SHA}..${HEAD_SHA}" --format='%B' | grep '^AI-Origin:' | sort -u | head -5 | tr '\n' ',' | sed 's/,$//')
@@ -76,7 +86,7 @@ jobs:
           MERGED_TS=$(date -d "${MERGED_AT}" +%s 2>/dev/null || date -jf "%Y-%m-%dT%H:%M:%SZ" "${MERGED_AT}" +%s)
 
           LEAD_TIME_SECONDS=$((MERGED_TS - CREATED_TS))
-          LEAD_TIME_HOURS=$(echo "scale=2; ${LEAD_TIME_SECONDS} / 3600" | bc -l)
+          LEAD_TIME_HOURS=$(echo "scale=2; ${LEAD_TIME_SECONDS} / 3600" | bc -l | sed 's/^\./0./')
 
           echo "lead_time_seconds=${LEAD_TIME_SECONDS}" >> "$GITHUB_OUTPUT"
           echo "lead_time_hours=${LEAD_TIME_HOURS}" >> "$GITHUB_OUTPUT"
@@ -98,7 +108,7 @@ jobs:
           TOTAL_REVIEWS=$((APPROVED + CHANGES_REQUESTED))
 
           if [[ "${TOTAL_REVIEWS}" -gt 0 ]]; then
-            ACCEPTANCE_RATE=$(echo "scale=4; ${APPROVED} / ${TOTAL_REVIEWS}" | bc -l)
+            ACCEPTANCE_RATE=$(echo "scale=4; ${APPROVED} / ${TOTAL_REVIEWS}" | bc -l | sed 's/^\./0./')
           else
             ACCEPTANCE_RATE="1"  # No reviews = accepted by default
           fi

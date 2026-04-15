@@ -37,7 +37,7 @@ interface MetricDetail {
   team_id: string;
   repo: string;
   timestamp: string;
-  prism_level: string;
+  prism_level: number | string;
   metric: { name: string; value: number; unit: string };
   ai_context?: AiContext;
   dora?: DoraMetrics;
@@ -133,7 +133,7 @@ async function writeMetadataToDynamo(
     repo: { S: detail.repo },
     last_event_type: { S: detailType },
     last_updated: { S: detail.timestamp },
-    prism_level: { N: detail.prism_level ?? '1' },
+    prism_level: { N: String(detail.prism_level ?? 1) },
   };
 
   if (detail.ai_context?.tool) {
@@ -149,20 +149,28 @@ async function writeMetadataToDynamo(
     item.assessment_value = { N: detail.metric.value.toString() };
   }
 
-  // Store latest DORA snapshot
+  // Store latest DORA snapshot — only numeric fields as N attributes
   if (detail.dora) {
     for (const [key, val] of Object.entries(detail.dora)) {
-      if (val != null) {
+      if (val == null) continue;
+      if (typeof val === 'number') {
         item[`dora_${key}`] = { N: val.toString() };
+      } else if (typeof val === 'string' && !isNaN(Number(val))) {
+        item[`dora_${key}`] = { N: val };
       }
+      // Skip non-numeric values (e.g. deploy_sha) — they don't belong in N attributes
     }
   }
 
-  // Store latest AI-DORA snapshot
+  // Store latest AI-DORA snapshot — only numeric fields
   if (detail.ai_dora) {
     for (const [key, val] of Object.entries(detail.ai_dora)) {
-      if (val != null) {
+      if (val == null) continue;
+      if (typeof val === 'object') continue; // Skip nested objects like tool_breakdown
+      if (typeof val === 'number') {
         item[`ai_dora_${key}`] = { N: val.toString() };
+      } else if (typeof val === 'string' && !isNaN(Number(val))) {
+        item[`ai_dora_${key}`] = { N: val };
       }
     }
   }

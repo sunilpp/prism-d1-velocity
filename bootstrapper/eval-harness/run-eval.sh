@@ -142,26 +142,32 @@ EVAL_PROMPT=$(jq -n \
 # ---------------------------------------------------------------------------
 echo "Invoking Bedrock model ${EVAL_MODEL_ID}..."
 
-BEDROCK_REQUEST=$(jq -n \
-    --arg prompt "You are a code evaluator. Evaluate the following code against the rubric and return ONLY a JSON object with the evaluation results.\n\n$(echo "${EVAL_PROMPT}" | jq -r '.')" \
-    '{
-        "anthropic_version": "bedrock-2023-05-31",
-        "max_tokens": 4096,
-        "messages": [
-            {
-                "role": "user",
-                "content": $prompt
-            }
-        ]
-    }')
+BEDROCK_REQUEST=$(echo "${EVAL_PROMPT}" | jq '{
+    anthropic_version: "bedrock-2023-05-31",
+    max_tokens: 4096,
+    messages: [{
+        role: "user",
+        content: ("You are a code evaluator. Evaluate the following code against the rubric and return ONLY a JSON object with the evaluation results.\n\n" + (. | tostring))
+    }]
+}')
 
-BEDROCK_RESPONSE=$(aws bedrock-runtime invoke-model \
+# Write request to temp file — avoids shell escaping issues with --body
+BEDROCK_REQ_FILE=$(mktemp)
+echo "${BEDROCK_REQUEST}" > "${BEDROCK_REQ_FILE}"
+
+BEDROCK_RESP_FILE=$(mktemp)
+aws bedrock-runtime invoke-model \
     --region "${AWS_REGION}" \
     --model-id "${EVAL_MODEL_ID}" \
     --content-type "application/json" \
     --accept "application/json" \
-    --body "$(echo "${BEDROCK_REQUEST}" | base64)" \
-    /dev/stdout 2>/dev/null) || {
+    --body "fileb://${BEDROCK_REQ_FILE}" \
+    "${BEDROCK_RESP_FILE}" 2>/dev/null
+
+BEDROCK_RESPONSE=$(cat "${BEDROCK_RESP_FILE}")
+rm -f "${BEDROCK_REQ_FILE}" "${BEDROCK_RESP_FILE}"
+
+test -n "${BEDROCK_RESPONSE}" || {
     echo "Error: Bedrock invocation failed. Check AWS credentials and model access."
     echo "Hint: Ensure you have access to ${EVAL_MODEL_ID} in ${AWS_REGION}."
     exit 1
