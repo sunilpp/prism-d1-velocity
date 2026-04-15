@@ -90,6 +90,10 @@ a:hover { color: var(--accent-emphasis); text-decoration: underline; }
   padding: 4px 14px; border-bottom: none; font-weight: 700; font-size: 13px;
 }
 .nav-links a.nav-demo:hover { background: var(--aws-squid-dark); color: var(--white); border-bottom: none; }
+.nav-links a.nav-github {
+  color: #aab7b8; display: flex; align-items: center; padding: 0; border-bottom: none;
+}
+.nav-links a.nav-github:hover { color: var(--white); border-bottom: none; }
 
 /* =========================================
    LANDING — Full viewport
