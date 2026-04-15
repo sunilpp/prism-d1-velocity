@@ -269,7 +269,7 @@ fi
 if [[ -z "${CLAUDE_CODE_USE_BEDROCK:-}" ]]; then
   warn "CLAUDE_CODE_USE_BEDROCK not set — add to your shell profile:"
   info "  export CLAUDE_CODE_USE_BEDROCK=1"
-  info "  export AWS_REGION=us-east-1"
+  info "  export AWS_REGION=us-west-2"
 else
   pass "CLAUDE_CODE_USE_BEDROCK=$CLAUDE_CODE_USE_BEDROCK"
 fi
@@ -329,7 +329,7 @@ header "9. Bedrock Model Access"
 if [[ "$SKIP_AWS" == true ]]; then
   info "Skipping Bedrock check (--skip-aws)"
 elif command_exists aws && aws sts get-caller-identity &>/dev/null; then
-  REGION="${AWS_REGION:-us-east-1}"
+  REGION="${AWS_REGION:-us-west-2}"
   MODELS=$(aws bedrock list-foundation-models --region "$REGION" \
     --query "modelSummaries[?contains(modelId, 'anthropic')].[modelId]" \
     --output text 2>/dev/null || echo "")

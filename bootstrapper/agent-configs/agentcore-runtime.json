@@ -22,7 +22,7 @@
   "model_access": {
     "primary_model": "anthropic.claude-sonnet-4-20250514",
     "fallback_model": "anthropic.claude-haiku-3-20250318",
-    "region": "us-east-1",
+    "region": "us-west-2",
     "max_tokens": 4096,
     "temperature": 0.1
   },

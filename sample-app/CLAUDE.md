@@ -44,7 +44,7 @@ sample-app/
 
 This project uses **Amazon Bedrock** for Claude model inference. When configuring Claude Code:
 - Profile: Use the Bedrock-configured AWS profile
-- Region: us-east-1 (or workshop-configured region)
+- Region: us-west-2 (or workshop-configured region)
 
 ## Metrics Schema Reference
 

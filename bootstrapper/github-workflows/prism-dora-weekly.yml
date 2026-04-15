@@ -33,7 +33,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.PRISM_AWS_ROLE_ARN }}
-          aws-region: us-east-1
+          aws-region: us-west-2
 
       - name: Calculate DORA metrics (past 7 days)
         id: dora
@@ -224,7 +224,7 @@ jobs:
             }')
 
           aws events put-events \
-            --region us-east-1 \
+            --region us-west-2 \
             --entries "[{
               \"Source\": \"prism.d1.velocity\",
               \"DetailType\": \"prism.d1.assessment\",
@@ -243,7 +243,7 @@ jobs:
 
           # AI Adoption Rate
           aws cloudwatch put-metric-data \
-            --region us-east-1 \
+            --region us-west-2 \
             --namespace "${NAMESPACE}" \
             --metric-data "[{
               \"MetricName\": \"AIAdoptionRate\",
@@ -258,7 +258,7 @@ jobs:
 
           # Spec Coverage
           aws cloudwatch put-metric-data \
-            --region us-east-1 \
+            --region us-west-2 \
             --namespace "${NAMESPACE}" \
             --metric-data "[{
               \"MetricName\": \"SpecCoverage\",
@@ -282,7 +282,7 @@ jobs:
             METRIC_VALUE="${TOOL_DATA##*:}"
 
             aws cloudwatch put-metric-data \
-              --region us-east-1 \
+              --region us-west-2 \
               --namespace "${NAMESPACE}" \
               --metric-data "[{
                 \"MetricName\": \"${METRIC_NAME}\",

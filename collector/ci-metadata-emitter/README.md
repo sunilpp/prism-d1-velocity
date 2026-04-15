@@ -39,7 +39,7 @@ jobs:
         with:
           event-type: deploy
           team-id: my-team
-          aws-region: us-east-1
+          aws-region: us-west-2
           base-ref: origin/main
 ```
 
@@ -76,7 +76,7 @@ jobs:
 |----------------|----------|-------------------|------------------------------------------|
 | `event-type`   | Yes      | `deploy`          | Event type: `deploy` or `pr`             |
 | `team-id`      | Yes      | —                 | PRISM team identifier                    |
-| `aws-region`   | No       | `us-east-1`       | AWS region for EventBridge               |
+| `aws-region`   | No       | `us-west-2`       | AWS region for EventBridge               |
 | `event-bus-name` | No     | `prism-d1-metrics` | EventBridge bus name                    |
 | `base-ref`     | No       | `origin/main`     | Base ref for commit range analysis       |
 

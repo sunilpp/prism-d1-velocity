@@ -4,7 +4,7 @@
     "This template requires customization before deployment:",
     "  1. Replace REPLACE_AWS_ACCOUNT_ID with your 12-digit AWS account ID",
     "  2. Replace REPLACE_DATA_SET_ARN with your Timestream-backed DataSet ARN",
-    "  3. Replace REPLACE_REGION with your deployment region (e.g., us-east-1)",
+    "  3. Replace REPLACE_REGION with your deployment region (e.g., us-west-2)",
     "  4. Adjust ThresholdValues in ConditionalFormatting to match your PRISM level targets",
     "Deploy via: aws quicksight create-analysis --cli-input-json file://ai-dora-analysis.json"
   ],

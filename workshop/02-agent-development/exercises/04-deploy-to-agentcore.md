@@ -49,7 +49,7 @@ This file tells AgentCore how to run your agent. Here's the structure:
   "model": {
     "provider": "bedrock",
     "model_id": "anthropic.claude-sonnet-4-20250514",
-    "region": "us-east-1"
+    "region": "us-west-2"
   },
   "memory": {
     "enabled": true,
@@ -120,7 +120,7 @@ Expected output:
 === AgentCore Deployment Plan (DRY RUN) ===
 
 Agent: prism-task-assistant
-Region: us-east-1
+Region: us-west-2
 
 Resources to create:
   [Runtime]
@@ -134,7 +134,7 @@ Resources to create:
     - Max messages: 100/session
 
   [Gateway]
-    - Endpoint: https://<agent-id>.agentcore.us-east-1.amazonaws.com/invoke
+    - Endpoint: https://<agent-id>.agentcore.us-west-2.amazonaws.com/invoke
     - Auth: IAM
     - Rate limit: 10 RPS
 
@@ -168,12 +168,12 @@ AgentCore creates a least-privilege IAM role for your agent. Review what permiss
     {
       "Effect": "Allow",
       "Action": "bedrock:InvokeModel",
-      "Resource": "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-sonnet-4-20250514"
+      "Resource": "arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-sonnet-4-20250514"
     },
     {
       "Effect": "Allow",
       "Action": "events:PutEvents",
-      "Resource": "arn:aws:events:us-east-1:*:event-bus/prism-d1-metrics"
+      "Resource": "arn:aws:events:us-west-2:*:event-bus/prism-d1-metrics"
     }
   ]
 }
@@ -212,7 +212,7 @@ The invocation endpoint would look like:
 
 ```bash
 # Example: invoking the deployed agent
-curl -X POST https://<agent-id>.agentcore.us-east-1.amazonaws.com/invoke \
+curl -X POST https://<agent-id>.agentcore.us-west-2.amazonaws.com/invoke \
   -H "Content-Type: application/json" \
   -H "Authorization: AWS4-HMAC-SHA256 ..." \
   -d '{

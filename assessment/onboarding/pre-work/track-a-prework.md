@@ -26,7 +26,7 @@ claude --version
 claude config set provider bedrock
 
 # Configure your AWS region
-claude config set bedrock.region us-east-1
+claude config set bedrock.region us-west-2
 
 # Verify Bedrock access
 claude "Hello, confirm you are running on Bedrock"

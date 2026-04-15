@@ -41,7 +41,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.PRISM_AWS_ROLE_ARN }}
-          aws-region: us-east-1
+          aws-region: us-west-2
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -284,7 +284,7 @@ jobs:
             }')
 
           aws events put-events \
-            --region us-east-1 \
+            --region us-west-2 \
             --entries "[{
               \"Source\": \"prism.d1.velocity\",
               \"DetailType\": \"prism.d1.agent.eval\",

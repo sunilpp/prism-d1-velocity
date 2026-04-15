@@ -70,7 +70,7 @@ if aws bedrock list-foundation-models --query "modelSummaries[?contains(modelId,
     fail "No Claude models found in Bedrock" "Enable Claude model access in AWS Console > Bedrock > Model access"
   fi
 else
-  fail "Cannot query Bedrock models" "Check AWS credentials and region (need us-east-1 or us-west-2)"
+  fail "Cannot query Bedrock models" "Check AWS credentials and region (need us-west-2 or us-west-2)"
 fi
 
 # Quick invocation test
@@ -107,7 +107,7 @@ fi
 if [ -n "${AWS_REGION:-}" ]; then
   pass "AWS_REGION is set (${AWS_REGION})"
 else
-  warn "AWS_REGION not set -- Claude Code will use default region. Set with: export AWS_REGION=us-east-1"
+  warn "AWS_REGION not set -- Claude Code will use default region. Set with: export AWS_REGION=us-west-2"
 fi
 
 # -------------------------------------------------------------------

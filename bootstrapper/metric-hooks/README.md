@@ -62,7 +62,7 @@ The hooks read from `.prism/config.json`:
   "team_id": "your-team",
   "repo": "your-repo",
   "event_bus": "prism-d1-metrics",
-  "aws_region": "us-east-1",
+  "aws_region": "us-west-2",
   "emit_to_eventbridge": true,
   "store_local": true,
   "prism_level": 2

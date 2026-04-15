@@ -357,6 +357,17 @@ async function publishCloudWatchMetrics(
     }
   }
 
+  // Also publish all metrics WITHOUT dimensions for aggregate dashboard views.
+  // CloudWatch treats dimensioned and dimensionless metrics as separate time series.
+  // The dashboard-stack.ts widgets query without dimensions, so we need both.
+  const dimensionlessMetrics: MetricDatum[] = metricData
+    .filter((m) => m.Dimensions && m.Dimensions.length > 0)
+    .map((m) => ({
+      ...m,
+      Dimensions: [],
+    }));
+  metricData.push(...dimensionlessMetrics);
+
   if (metricData.length === 0) {
     return;
   }

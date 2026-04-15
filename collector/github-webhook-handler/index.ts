@@ -28,7 +28,7 @@ import {
 const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME ?? 'prism-d1-metrics';
 const WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET ?? '';
 const TEAM_ID = process.env.TEAM_ID ?? 'default';
-const AWS_REGION = process.env.AWS_REGION ?? 'us-east-1';
+const AWS_REGION = process.env.AWS_REGION ?? 'us-west-2';
 
 const ebClient = new EventBridgeClient({ region: AWS_REGION });
 

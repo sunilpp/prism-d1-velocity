@@ -20,7 +20,7 @@
   "storage_backend": {
     "type": "DYNAMODB",
     "table_name": "<AGENT_NAME>-sessions",
-    "region": "us-east-1",
+    "region": "us-west-2",
     "encryption": "AWS_OWNED_KEY",
     "_comment": "DynamoDB is the default and recommended storage backend. For high-throughput agents, consider enabling on-demand capacity."
   },

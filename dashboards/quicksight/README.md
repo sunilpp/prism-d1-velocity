@@ -80,7 +80,7 @@ Replace placeholder values in each JSON file, then deploy:
 ```bash
 # Replace placeholders
 ACCOUNT_ID="123456789012"
-REGION="us-east-1"
+REGION="us-west-2"
 DATASET_ARN="arn:aws:quicksight:${REGION}:${ACCOUNT_ID}:dataset/prism-d1-metrics-dataset"
 
 # Process and deploy AI-DORA Analysis

@@ -13,7 +13,7 @@
 3. Claude Code CLI
   [PASS] Claude Code CLI installed (1.0.12)
   [PASS] CLAUDE_CODE_USE_BEDROCK=1 is set
-  [PASS] AWS_REGION is set (us-east-1)
+  [PASS] AWS_REGION is set (us-west-2)
 
 4. Kiro IDE
   [PASS] Kiro CLI found (1.2.0)

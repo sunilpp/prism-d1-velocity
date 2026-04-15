@@ -53,7 +53,7 @@ from strands.models.bedrock import BedrockModel
 # Standard agent setup pattern
 model = BedrockModel(
     model_id="anthropic.claude-sonnet-4-20250514",
-    region_name="us-east-1",
+    region_name="us-west-2",
 )
 
 agent = Agent(

@@ -28,7 +28,7 @@ Edit `eval-config.json` to customize:
 | `model_id` | Bedrock model for code generation | `anthropic.claude-sonnet-4-20250514` |
 | `eval_model_id` | Bedrock model for evaluation | `anthropic.claude-sonnet-4-20250514` |
 | `event_bus` | EventBridge bus name | `prism-d1-metrics` |
-| `aws_region` | AWS region | `us-east-1` |
+| `aws_region` | AWS region | `us-west-2` |
 | `output_dir` | Local results directory | `.prism/eval-results` |
 | `emit_to_eventbridge` | Send events to EventBridge | `true` |
 

@@ -17,7 +17,7 @@
   "model": {
     "provider": "bedrock",
     "model_id": "anthropic.claude-sonnet-4-20250514",
-    "region": "us-east-1",
+    "region": "us-west-2",
     "inference_config": {
       "max_tokens": 4096,
       "temperature": 0.1,
@@ -105,15 +105,15 @@
     "permissions": [
       {
         "action": "bedrock:InvokeModel",
-        "resource": "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-sonnet-4-20250514"
+        "resource": "arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-sonnet-4-20250514"
       },
       {
         "action": "bedrock:InvokeModel",
-        "resource": "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-haiku-4-5-20251001"
+        "resource": "arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-haiku-4-5-20251001"
       },
       {
         "action": "events:PutEvents",
-        "resource": "arn:aws:events:us-east-1:*:event-bus/prism-d1-metrics"
+        "resource": "arn:aws:events:us-west-2:*:event-bus/prism-d1-metrics"
       }
     ]
   }

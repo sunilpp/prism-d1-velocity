@@ -32,7 +32,7 @@ def load_config(path: str) -> dict:
 def deploy(config: dict, dry_run: bool = False) -> None:
     """Deploy agent to AgentCore Runtime."""
     agent_name = config.get("agent_name", "task-assistant")
-    region = config.get("aws_region", "us-east-1")
+    region = config.get("aws_region", "us-west-2")
 
     print(f"Deploying agent '{agent_name}' to AgentCore in {region}...")
     print(f"Configuration: {json.dumps(config, indent=2)}")

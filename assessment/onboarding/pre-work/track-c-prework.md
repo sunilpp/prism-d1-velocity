@@ -55,7 +55,7 @@ If your gaps include Eval & Quality or AI Observability:
 
 ```bash
 # Verify Bedrock eval access
-aws bedrock list-evaluation-jobs --region us-east-1
+aws bedrock list-evaluation-jobs --region us-west-2
 ```
 
 ---

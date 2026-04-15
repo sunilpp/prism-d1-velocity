@@ -51,12 +51,12 @@ GitHub Actions uses OpenID Connect (OIDC) to assume an AWS IAM role — no long-
        {
          "Effect": "Allow",
          "Action": "events:PutEvents",
-         "Resource": "arn:aws:events:us-east-1:ACCOUNT_ID:event-bus/prism-d1-metrics"
+         "Resource": "arn:aws:events:us-west-2:ACCOUNT_ID:event-bus/prism-d1-metrics"
        },
        {
          "Effect": "Allow",
          "Action": "bedrock:InvokeModel",
-         "Resource": "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-sonnet-4-20250514"
+         "Resource": "arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-sonnet-4-20250514"
        }
      ]
    }
@@ -95,7 +95,7 @@ All workflows default to `main` and `master`. Edit the `branches` field in each 
 
 ### Changing the AWS region
 
-Replace `us-east-1` in the `aws-region` field and EventBridge commands.
+Replace `us-west-2` in the `aws-region` field and EventBridge commands.
 
 ### Adjusting the eval threshold
 
@@ -121,7 +121,7 @@ Add a step to the weekly workflow to trigger a QuickSight dataset refresh:
       --aws-account-id "${{ secrets.AWS_ACCOUNT_ID }}" \
       --data-set-id "prism-d1-metrics-dataset" \
       --ingestion-id "weekly-$(date +%Y%m%d)" \
-      --region us-east-1
+      --region us-west-2
 ```
 
 ## Events Emitted

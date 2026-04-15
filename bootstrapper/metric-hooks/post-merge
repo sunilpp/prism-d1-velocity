@@ -17,7 +17,7 @@ CONFIG_FILE=".prism/config.json"
 TEAM_ID="unknown"
 REPO="unknown"
 EVENT_BUS="prism-d1-metrics"
-AWS_REGION="us-east-1"
+AWS_REGION="us-west-2"
 EMIT_TO_EB="true"
 STORE_LOCAL="true"
 PRISM_LEVEL=2
@@ -26,7 +26,7 @@ if [[ -f "${CONFIG_FILE}" ]]; then
     TEAM_ID=$(jq -r '.team_id // "unknown"' "${CONFIG_FILE}" 2>/dev/null || echo "unknown")
     REPO=$(jq -r '.repo // "unknown"' "${CONFIG_FILE}" 2>/dev/null || echo "unknown")
     EVENT_BUS=$(jq -r '.event_bus // "prism-d1-metrics"' "${CONFIG_FILE}" 2>/dev/null || echo "prism-d1-metrics")
-    AWS_REGION=$(jq -r '.aws_region // "us-east-1"' "${CONFIG_FILE}" 2>/dev/null || echo "us-east-1")
+    AWS_REGION=$(jq -r '.aws_region // "us-west-2"' "${CONFIG_FILE}" 2>/dev/null || echo "us-west-2")
     EMIT_TO_EB=$(jq -r '.emit_to_eventbridge // true' "${CONFIG_FILE}" 2>/dev/null || echo "true")
     STORE_LOCAL=$(jq -r '.store_local // true' "${CONFIG_FILE}" 2>/dev/null || echo "true")
     PRISM_LEVEL=$(jq -r '.prism_level // 2' "${CONFIG_FILE}" 2>/dev/null || echo "2")

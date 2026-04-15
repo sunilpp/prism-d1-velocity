@@ -56,7 +56,7 @@ claude --version
 
 # Configure for Bedrock
 export CLAUDE_CODE_USE_BEDROCK=1
-export AWS_REGION=us-east-1
+export AWS_REGION=us-west-2
 
 # Verify Bedrock connectivity
 claude --print-system-prompt > /dev/null && echo "Claude Code OK"
@@ -66,7 +66,7 @@ Add to your shell profile (`~/.zshrc` or `~/.bashrc`) so it persists:
 
 ```bash
 echo 'export CLAUDE_CODE_USE_BEDROCK=1' >> ~/.zshrc
-echo 'export AWS_REGION=us-east-1' >> ~/.zshrc
+echo 'export AWS_REGION=us-west-2' >> ~/.zshrc
 source ~/.zshrc
 ```
 

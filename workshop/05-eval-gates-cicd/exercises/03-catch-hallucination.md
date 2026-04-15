@@ -29,7 +29,7 @@ const router = Router();
 router.get("/analytics/summary", async (_req: Request, res: Response) => {
   const engine = new AnalyticsEngine({
     provider: "custom",
-    region: "us-east-1",
+    region: "us-west-2",
   });
 
   const metrics = await aggregateMetrics({

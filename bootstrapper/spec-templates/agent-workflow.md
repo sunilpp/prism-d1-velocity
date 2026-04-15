@@ -183,7 +183,7 @@ mcp_client = MCPClient(
 
 model = BedrockModel(
     model_id="anthropic.claude-sonnet-4-20250514",
-    region_name="us-east-1",
+    region_name="us-west-2",
 )
 
 with mcp_client:

@@ -14,7 +14,7 @@ inputs:
   aws-region:
     description: 'AWS region for EventBridge'
     required: false
-    default: 'us-east-1'
+    default: 'us-west-2'
   event-bus-name:
     description: 'EventBridge bus name'
     required: false

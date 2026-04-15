@@ -50,7 +50,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.PRISM_METRICS_ROLE_ARN }}
-          aws-region: us-east-1
+          aws-region: us-west-2
 
       - name: Install jq
         run: sudo apt-get install -y jq

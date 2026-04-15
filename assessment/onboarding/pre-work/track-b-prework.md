@@ -20,7 +20,7 @@ claude --version
 
 ```bash
 claude config set provider bedrock
-claude config set bedrock.region us-east-1
+claude config set bedrock.region us-west-2
 claude "Hello, confirm you are running on Bedrock"
 ```
 
@@ -83,13 +83,13 @@ The metrics pipeline requires the following AWS services. Confirm your account h
 
 ```bash
 # Check EventBridge access
-aws events list-rules --region us-east-1
+aws events list-rules --region us-west-2
 
 # Check Timestream access
-aws timestream-write describe-endpoints --region us-east-1
+aws timestream-write describe-endpoints --region us-west-2
 
 # Check CloudWatch access
-aws cloudwatch list-metrics --region us-east-1 --max-items 1
+aws cloudwatch list-metrics --region us-west-2 --max-items 1
 ```
 
 If any of these fail, work with your AWS administrator to grant access before the workshop.
