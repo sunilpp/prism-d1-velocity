@@ -222,6 +222,70 @@ jobs:
             }]"
 
           echo "Weekly DORA assessment emitted successfully."
+
+      - name: Emit tool breakdown and adoption metrics to CloudWatch
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          TEAM_ID="${{ vars.PRISM_TEAM_ID }}"
+          REPO="${{ github.repository }}"
+          NAMESPACE="PRISM/D1/Velocity"
+
+          # AI Adoption Rate
+          aws cloudwatch put-metric-data \
+            --region us-east-1 \
+            --namespace "${NAMESPACE}" \
+            --metric-data "[{
+              \"MetricName\": \"AIAdoptionRate\",
+              \"Value\": ${{ steps.ai-dora.outputs.ai_adoption_rate }},
+              \"Unit\": \"Percent\",
+              \"Timestamp\": \"${TIMESTAMP}\",
+              \"Dimensions\": [
+                {\"Name\": \"TeamId\", \"Value\": \"${TEAM_ID}\"},
+                {\"Name\": \"Repository\", \"Value\": \"${REPO}\"}
+              ]
+            }]"
+
+          # Spec Coverage
+          aws cloudwatch put-metric-data \
+            --region us-east-1 \
+            --namespace "${NAMESPACE}" \
+            --metric-data "[{
+              \"MetricName\": \"SpecCoverage\",
+              \"Value\": ${{ steps.ai-dora.outputs.spec_coverage }},
+              \"Unit\": \"Percent\",
+              \"Timestamp\": \"${TIMESTAMP}\",
+              \"Dimensions\": [
+                {\"Name\": \"TeamId\", \"Value\": \"${TEAM_ID}\"},
+                {\"Name\": \"Repository\", \"Value\": \"${REPO}\"}
+              ]
+            }]"
+
+          # Tool breakdown — one metric per tool
+          for TOOL_DATA in \
+            "ClaudeCodeCommits:${{ steps.ai-dora.outputs.claude_code_count }}" \
+            "KiroCommits:${{ steps.ai-dora.outputs.kiro_count }}" \
+            "QDeveloperCommits:${{ steps.ai-dora.outputs.q_dev_count }}" \
+            "UntaggedCommits:${{ steps.ai-dora.outputs.untagged }}"; do
+
+            METRIC_NAME="${TOOL_DATA%%:*}"
+            METRIC_VALUE="${TOOL_DATA##*:}"
+
+            aws cloudwatch put-metric-data \
+              --region us-east-1 \
+              --namespace "${NAMESPACE}" \
+              --metric-data "[{
+                \"MetricName\": \"${METRIC_NAME}\",
+                \"Value\": ${METRIC_VALUE},
+                \"Unit\": \"Count\",
+                \"Timestamp\": \"${TIMESTAMP}\",
+                \"Dimensions\": [
+                  {\"Name\": \"TeamId\", \"Value\": \"${TEAM_ID}\"},
+                  {\"Name\": \"Repository\", \"Value\": \"${REPO}\"}
+                ]
+              }]"
+          done
+
+          echo "Tool breakdown and adoption metrics emitted to CloudWatch."
           echo ""
           echo "=== DORA Metrics ==="
           echo "Deployment Frequency: ${{ steps.dora.outputs.deploy_frequency }}/day"
