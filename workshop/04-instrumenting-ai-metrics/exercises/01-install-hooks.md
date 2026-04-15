@@ -22,11 +22,11 @@ Before installing anything, read what the hooks do:
 cd prism-d1-sample-app
 
 # Copy the prepare-commit-msg hook
-cp /path/to/workshop/03-instrumenting-ai-metrics/exercises/prepare-commit-msg .git/hooks/prepare-commit-msg
+cp /path/to/workshop/04-instrumenting-ai-metrics/exercises/prepare-commit-msg .git/hooks/prepare-commit-msg
 chmod +x .git/hooks/prepare-commit-msg
 
 # Copy the post-commit hook
-cp /path/to/workshop/03-instrumenting-ai-metrics/exercises/post-commit .git/hooks/post-commit
+cp /path/to/workshop/04-instrumenting-ai-metrics/exercises/post-commit .git/hooks/post-commit
 chmod +x .git/hooks/post-commit
 ```
 

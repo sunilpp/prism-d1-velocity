@@ -84,4 +84,4 @@ pytest tests/test_tools.py  # Tool tests only
 python scripts/deploy-agentcore.py --config ../bootstrapper/agent-configs/agentcore-runtime.json
 ```
 
-See [Module 06 Exercise 4](../../workshop/06-agent-development/exercises/04-deploy-to-agentcore.md) for details.
+See [Module 02 Exercise 4](../../workshop/02-agent-development/exercises/04-deploy-to-agentcore.md) for details.

@@ -1,4 +1,4 @@
-# Module 06: Agent Development
+# Module 02: Agent Development
 
 | | |
 |---|---|

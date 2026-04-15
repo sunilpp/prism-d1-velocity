@@ -11,7 +11,7 @@ Generate a week's worth of realistic commit and PR metric data, send it to Event
 ### Step 1: Run the data generator
 
 ```bash
-cd /path/to/workshop/05-dashboards-visibility/exercises/
+cd /path/to/workshop/06-dashboards-visibility/exercises/
 chmod +x generate-sample-data.sh
 ./generate-sample-data.sh
 ```

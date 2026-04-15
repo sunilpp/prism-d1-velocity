@@ -96,11 +96,11 @@ echo 'PRISM_TEAM_ID=your-team-name' >> .env
 |---|--------|----------|-------------|
 | 00 | [Prerequisites](workshop/00-prerequisites/) | 30 min | Environment ready, Bedrock access confirmed |
 | 01 | [AI-SDLC Foundations](workshop/01-ai-sdlc-foundations/) | 45 min | Claude Code configured, first AI-assisted commit |
-| 02 | [Spec-Driven Development](workshop/02-spec-driven-development/) | 45 min | Kiro spec → Claude Code implementation flow |
-| 03 | [Instrumenting AI Metrics](workshop/03-instrumenting-ai-metrics/) | 45 min | Git hooks + CI emitting enhanced DORA events |
-| 04 | [Eval Gates in CI/CD](workshop/04-eval-gates-cicd/) | 45 min | Bedrock Evaluation gate blocking bad merges |
-| 05 | [Dashboards & Visibility](workshop/05-dashboards-visibility/) | 30 min | Executive + team dashboards live |
-| 06 | [Agent Development](workshop/06-agent-development/) | 70 min | Strands agent + MCP server + multi-agent orchestration |
+| 02 | [Agent Development](workshop/02-agent-development/) | 70 min | Strands agent + MCP server + multi-agent orchestration |
+| 03 | [Spec-Driven Development](workshop/03-spec-driven-development/) | 45 min | Kiro spec → Claude Code implementation flow |
+| 04 | [Instrumenting AI Metrics](workshop/04-instrumenting-ai-metrics/) | 45 min | Git hooks + CI emitting enhanced DORA events |
+| 05 | [Eval Gates in CI/CD](workshop/05-eval-gates-cicd/) | 45 min | Bedrock Evaluation gate blocking bad merges |
+| 06 | [Dashboards & Visibility](workshop/06-dashboards-visibility/) | 30 min | Executive + team dashboards live |
 
 ## Architecture
 
@@ -149,7 +149,7 @@ The repo includes a complete agent development stack for PRISM Level 3+ teams:
 | **Tool Integration** | Model Context Protocol (MCP) | `sample-app/src/mcp/` |
 | **Production Hosting** | Amazon Bedrock AgentCore | `bootstrapper/agent-configs/` |
 | **Agent Eval** | Bedrock Evaluations | `bootstrapper/eval-harness/rubrics/agent-quality.json` |
-| **Workshop** | Module 06: Agent Development | `workshop/06-agent-development/` |
+| **Workshop** | Module 02: Agent Development | `workshop/02-agent-development/` |
 
 **GitHub Pages**: [sunilpp.github.io/prism-d1-velocity](https://sunilpp.github.io/prism-d1-velocity/)
 
