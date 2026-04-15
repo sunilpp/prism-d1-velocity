@@ -15,10 +15,11 @@ Part of the [PRISM Framework](../README.md) (Progressive Readiness Index for Sca
 
 ### For Engineering Teams (Bottom-Up Activation)
 
-- **4-hour workshop** with hands-on exercises using Claude Code + Bedrock
+- **4-hour workshop** (+ extensions) with hands-on exercises using Claude Code + Bedrock
 - **Spec-driven development** templates compatible with Kiro
-- **Bootstrapper code** — git hooks, CI workflows, eval harnesses teams inherit permanently
-- **Sample application** to practice AI-DLC patterns against
+- **AI agent development** — build agents with Strands SDK, MCP, and Amazon Bedrock AgentCore
+- **Bootstrapper code** — git hooks, CI workflows, eval harnesses, agent configs teams inherit permanently
+- **Sample application** with task API + MCP server + Strands agent to practice AI-DLC patterns
 
 ## Quick Start
 
@@ -43,6 +44,17 @@ npx cdk deploy --all
 
 Start with [Module 00: Prerequisites](workshop/00-prerequisites/README.md) and work through sequentially.
 
+### Run the Sample Agent (No AWS Required)
+
+```bash
+cd sample-app
+npm install && npm run dev          # Start the task API
+
+cd agent
+pip install -e ".[dev]"
+python scripts/run-demo.py --mock   # Run agent demo with mock model
+```
+
 ### Adopt the Bootstrapper (Post-Workshop)
 
 ```bash
@@ -54,6 +66,10 @@ cd ~/your-repo
 .prism/metric-hooks/install.sh
 cp .prism/github-workflows/*.yml .github/workflows/
 cp .prism/claude-code/CLAUDE.md ./CLAUDE.md
+
+# For agent projects, also copy:
+cp .prism/agent-configs/ ./agent-configs/
+cp .prism/claude-code/CLAUDE-agent.md ./CLAUDE-agent.md
 
 # Configure your team ID
 echo 'PRISM_TEAM_ID=your-team-name' >> .env
@@ -84,6 +100,7 @@ echo 'PRISM_TEAM_ID=your-team-name' >> .env
 | 03 | [Instrumenting AI Metrics](workshop/03-instrumenting-ai-metrics/) | 45 min | Git hooks + CI emitting enhanced DORA events |
 | 04 | [Eval Gates in CI/CD](workshop/04-eval-gates-cicd/) | 45 min | Bedrock Evaluation gate blocking bad merges |
 | 05 | [Dashboards & Visibility](workshop/05-dashboards-visibility/) | 30 min | Executive + team dashboards live |
+| 06 | [Agent Development](workshop/06-agent-development/) | 70 min | Strands agent + MCP server + multi-agent orchestration |
 
 ## Architecture
 
@@ -94,17 +111,17 @@ Claude Code ──────┐
 Kiro Specs ───────┤               ┌──────────────┐
 Git Hooks ────────┼── API GW ───→ │ EventBridge  │
 GitHub Actions ───┤               └──────┬───────┘
-Bedrock Evals ────┘                      │
-                                  ┌──────▼───────┐
-                                  │   Lambda     │  enrich + normalize
-                                  └──────┬───────┘
-                                         │
-                                ┌────────┼────────┐
-                                ▼        ▼        ▼
-                            DynamoDB  DynamoDB CloudWatch
-                            (events) (metadata)   │
-                                │        │        │
-                                └────────┼────────┘
+Bedrock Evals ────┤                      │
+Strands Agents ───┘               ┌──────▼───────┐
+      │                           │   Lambda     │  enrich + normalize
+  MCP Server ←── Tool Discovery   └──────┬───────┘
+      │                                  │
+  AgentCore ←── Runtime + Ops    ┌───────┼────────┐
+                                 ▼       ▼        ▼
+                             DynamoDB DynamoDB CloudWatch
+                             (events) (metadata)   │
+                                 │       │        │
+                                 └───────┼────────┘
                                          ▼
                               ┌──────────────────┐
                               │    QuickSight    │  Executive Readout
@@ -121,6 +138,20 @@ Bedrock Evals ────┘                      │
 | L3 | Integrated | Eval gates in pipeline, AI-DORA dashboards live, spec-driven workflow |
 | L4 | Orchestrated | Multi-team platform, AI FinOps, governed agent scope |
 | L5 | Autonomous | Agents contributing to architecture, >20% autonomous deployments |
+
+## AI Agent Development
+
+The repo includes a complete agent development stack for PRISM Level 3+ teams:
+
+| Component | Technology | Location |
+|-----------|-----------|----------|
+| **Agent Framework** | Strands Agents SDK (Python) | `sample-app/agent/` |
+| **Tool Integration** | Model Context Protocol (MCP) | `sample-app/src/mcp/` |
+| **Production Hosting** | Amazon Bedrock AgentCore | `bootstrapper/agent-configs/` |
+| **Agent Eval** | Bedrock Evaluations | `bootstrapper/eval-harness/rubrics/agent-quality.json` |
+| **Workshop** | Module 06: Agent Development | `workshop/06-agent-development/` |
+
+**GitHub Pages**: [sunilpp.github.io/prism-d1-velocity](https://sunilpp.github.io/prism-d1-velocity/)
 
 ## License
 
