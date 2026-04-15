@@ -11,9 +11,11 @@ This demonstrates the Strands SDK's agent composition patterns.
 import json
 
 from strands import Agent, tool
+from strands.models.bedrock import BedrockModel
 
 from ..task_assistant.agent import create_agent
 from ..task_assistant.config import AgentConfig
+from ..task_assistant.mock_model import MockModel
 from ..task_assistant.metrics import AgentMetrics
 from .planner import create_planner
 from .reviewer import create_reviewer
@@ -110,8 +112,11 @@ def create_orchestrator(
         "tools": [plan, execute, review],
     }
     if mock:
-        kwargs["model"] = "mock"
+        kwargs["model"] = MockModel()
     else:
-        kwargs["model"] = f"bedrock/{config.model_id}"
+        kwargs["model"] = BedrockModel(
+            model_id=config.model_id,
+            region_name=config.aws_region,
+        )
 
     return Agent(**kwargs)

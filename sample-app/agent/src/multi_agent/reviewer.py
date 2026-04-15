@@ -51,7 +51,7 @@ def create_reviewer(mock: bool = False) -> Agent:
     else:
         # Use Haiku for the reviewer — fast and cheap
         kwargs["model"] = BedrockModel(
-            model_id="anthropic.claude-haiku-4-5-20251001",
+            model_id="anthropic.claude-haiku-4-5-20251001-v1:0",
             region_name="us-west-2",
         )
     return Agent(**kwargs)
