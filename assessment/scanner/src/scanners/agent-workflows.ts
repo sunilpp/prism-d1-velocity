@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const CATEGORY = 'Agent Workflows';
-const MAX_POINTS = 5;
+const MAX_POINTS = 8;
 
 export async function scan(repoPath: string, config: ScanConfig): Promise<CategoryScore> {
   const evidence: Evidence[] = [];
@@ -32,6 +32,11 @@ export async function scan(repoPath: string, config: ScanConfig): Promise<Catego
     /agent[_-]?executor/i, /agent[_-]?chain/i,
     /crew[_-]?ai/i, /autogen/i, /langgraph/i,
     /step[_-]?functions.*agent/i,
+    /\bstrands\b/i, /@tool/i, /from\s+strands/i,
+    /strands\.agents/i, /strands[_-]agents/i,
+    /\bagentcore\b/i, /agent[_-]?core/i,
+    /AgentCoreRuntime/i, /agentcore[_-]runtime/i,
+    /agentcore\.json/i,
   ];
   let hasAgentDefs = false;
   let agentDefDetail = '';
@@ -72,6 +77,8 @@ export async function scan(repoPath: string, config: ScanConfig): Promise<Catego
     /tool[_-]?registration/i, /tool[_-]?registry/i,
     /tools[_-]?config/i, /function[_-]?calling/i,
     /tool[_-]?use/i, /tool[_-]?definition/i,
+    /McpServer/i, /mcp_server/i,
+    /stdio[_-]?transport/i, /@modelcontextprotocol/i,
   ];
   let hasMcp = false;
   let mcpDetail = '';
@@ -133,6 +140,107 @@ export async function scan(repoPath: string, config: ScanConfig): Promise<Catego
     found: hasAudit,
     points: hasAudit ? 1 : 0,
     detail: hasAudit ? auditDetail : 'No agent audit trail configuration found',
+  });
+
+  // AgentCore deployment configs or scripts (1 pt)
+  const agentcoreDeployPatterns = [
+    /agentcore\.json/i, /agentcore[_-]?deploy/i,
+    /agentcore[_-]?config/i, /AgentCoreRuntime/i,
+    /agent[_-]?core.*deploy/i, /deploy.*agent[_-]?core/i,
+  ];
+  let hasAgentCoreDeploy = false;
+  let agentCoreDeployDetail = '';
+
+  const agentcoreFiles = await glob('**/agentcore.json', {
+    cwd: repoPath, dot: true,
+    ignore: ['node_modules/**', 'dist/**', '.git/**'],
+  }).catch(() => []);
+
+  if (agentcoreFiles.length > 0) {
+    hasAgentCoreDeploy = true;
+    agentCoreDeployDetail = `Found AgentCore config: ${agentcoreFiles[0]}`;
+  } else {
+    for (const [file, content] of contentCache) {
+      for (const pat of agentcoreDeployPatterns) {
+        if (pat.test(content)) {
+          hasAgentCoreDeploy = true;
+          agentCoreDeployDetail = `${file} contains AgentCore deployment configuration (${pat.source})`;
+          break;
+        }
+      }
+      if (hasAgentCoreDeploy) break;
+    }
+  }
+
+  evidence.push({
+    signal: 'AgentCore deployment configuration',
+    found: hasAgentCoreDeploy,
+    points: hasAgentCoreDeploy ? 1 : 0,
+    detail: hasAgentCoreDeploy ? agentCoreDeployDetail : 'No AgentCore deployment configs or scripts found',
+  });
+
+  // Agent testing and eval rubrics (1 pt)
+  const agentTestPatterns = [
+    /test[_-]?agent/i, /agent.*test/i, /agent.*eval/i,
+    /conftest/i, /mock.*agent/i,
+    /agent.*spec/i, /eval[_-]?rubric/i,
+    /agent.*fixture/i,
+  ];
+  let hasAgentTesting = false;
+  let agentTestDetail = '';
+
+  const agentTestFiles = await glob('**/*{test_agent,agent_test,agent.test,agent.spec,agent_eval}*', {
+    cwd: repoPath, dot: true,
+    ignore: ['node_modules/**', 'dist/**', '.git/**'],
+  }).catch(() => []);
+
+  if (agentTestFiles.length > 0) {
+    hasAgentTesting = true;
+    agentTestDetail = `Found agent test file: ${agentTestFiles[0]}`;
+  } else {
+    for (const [file, content] of contentCache) {
+      for (const pat of agentTestPatterns) {
+        if (pat.test(content)) {
+          hasAgentTesting = true;
+          agentTestDetail = `${file} contains agent testing patterns (${pat.source})`;
+          break;
+        }
+      }
+      if (hasAgentTesting) break;
+    }
+  }
+
+  evidence.push({
+    signal: 'Agent testing and eval rubrics',
+    found: hasAgentTesting,
+    points: hasAgentTesting ? 1 : 0,
+    detail: hasAgentTesting ? agentTestDetail : 'No agent test files or eval rubrics found',
+  });
+
+  // Agent metrics emission (1 pt)
+  const agentMetricPatterns = [
+    /prism\.d1\.agent/i, /agent[_-]?invocation/i,
+    /AgentInvocationCount/i, /agent[_-]?metric/i,
+    /agent.*telemetry/i, /agent.*emit/i,
+  ];
+  let hasAgentMetrics = false;
+  let agentMetricDetail = '';
+  for (const [file, content] of contentCache) {
+    for (const pat of agentMetricPatterns) {
+      if (pat.test(content)) {
+        hasAgentMetrics = true;
+        agentMetricDetail = `${file} contains agent metric emission (${pat.source})`;
+        break;
+      }
+    }
+    if (hasAgentMetrics) break;
+  }
+
+  evidence.push({
+    signal: 'Agent metrics emission',
+    found: hasAgentMetrics,
+    points: hasAgentMetrics ? 1 : 0,
+    detail: hasAgentMetrics ? agentMetricDetail : 'No agent metric emission patterns found',
   });
 
   const earnedPoints = evidence.reduce((sum, e) => sum + e.points, 0);

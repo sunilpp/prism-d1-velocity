@@ -20,13 +20,18 @@ It provides a workshop-style GitHub repo with bootstrapper code for AI-native so
 ## Repository Structure
 
 ```
-workshop/           — 6 instructor-led modules (00-05)
+workshop/           — 7 instructor-led modules (00-06)
+  06-agent-development/ — Agent dev with Strands SDK, MCP, AgentCore
 infra/              — AWS CDK stacks (metrics pipeline, dashboards, API)
 collector/          — Metric collection (GitHub webhooks, git hooks, CI emitters)
 dashboards/         — Dashboard-as-code (CloudWatch JSON, QuickSight templates)
 bootstrapper/       — What teams inherit post-workshop (templates, hooks, workflows)
+  agent-configs/    — AgentCore Runtime, Memory, Gateway templates
+  mcp-servers/      — Reference MCP server implementations
 sample-app/         — Hands-on workshop target application
-docs/leader-guide/  — Executive readout templates and ROI models
+  agent/            — Strands-based task assistant agent (Python)
+  src/mcp/          — MCP server exposing task API as tools (TypeScript)
+docs/               — GitHub Pages site + leader guide
 ```
 
 ## Development Workflow
