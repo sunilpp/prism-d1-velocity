@@ -122,6 +122,71 @@ for DAY in $(seq 7 -1 0); do
         eval:{result:$res,pr_number:$pr}}')
     add_event "prism.d1.eval" "$DETAIL"
   done
+
+  # --- Weekly assessment (all remaining metrics) ---
+  TS="${DATE}T09:00:00Z"
+  CFR=$(echo "scale=4; ($((RANDOM % 8)) + 1) / 100" | bc -l | sed 's/^\./0./')
+  MTTR_S=$((RANDOM % 3600 + 600))
+  ACCEPT=$(echo "scale=4; ($((RANDOM % 20)) + 70) / 100" | bc -l | sed 's/^\./0./')
+  COVERAGE=$(echo "scale=4; ($((RANDOM % 25)) + 10) / 100" | bc -l | sed 's/^\./0./')
+  SPEC_H=$(echo "scale=2; ($((RANDOM % 30)) + 10) / 10" | bc -l | sed 's/^\./0./')
+  DEFECT=$(echo "scale=4; ($((RANDOM % 5)) + 1) / 100" | bc -l | sed 's/^\./0./')
+
+  # Change Failure Rate
+  D=$(jq -nc --arg t "$TEAM" --arg r "$REPO" --arg ts "$TS" --argjson v "$CFR" \
+    '{team_id:$t,repo:$r,timestamp:$ts,prism_level:2,metric:{name:"change_failure_rate",value:$v,unit:"percent"},dora:{change_failure_rate:$v}}')
+  add_event "prism.d1.assessment" "$D"
+
+  # MTTR
+  D=$(jq -nc --arg t "$TEAM" --arg r "$REPO" --arg ts "$TS" --argjson v "$MTTR_S" \
+    '{team_id:$t,repo:$r,timestamp:$ts,prism_level:2,metric:{name:"mttr",value:$v,unit:"seconds"},dora:{mttr_seconds:$v}}')
+  add_event "prism.d1.assessment" "$D"
+
+  # AI Acceptance Rate
+  D=$(jq -nc --arg t "$TEAM" --arg r "$REPO" --arg ts "$TS" --argjson v "$ACCEPT" \
+    '{team_id:$t,repo:$r,timestamp:$ts,prism_level:2,metric:{name:"ai_acceptance_rate",value:$v,unit:"percent"},ai_dora:{ai_acceptance_rate:$v}}')
+  add_event "prism.d1.assessment" "$D"
+
+  # AI Test Coverage Delta
+  D=$(jq -nc --arg t "$TEAM" --arg r "$REPO" --arg ts "$TS" --argjson v "$COVERAGE" \
+    '{team_id:$t,repo:$r,timestamp:$ts,prism_level:2,metric:{name:"ai_test_coverage_delta",value:$v,unit:"percent"},ai_dora:{ai_test_coverage_delta:$v}}')
+  add_event "prism.d1.assessment" "$D"
+
+  # Spec-to-Code Hours
+  D=$(jq -nc --arg t "$TEAM" --arg r "$REPO" --arg ts "$TS" --argjson v "$SPEC_H" \
+    '{team_id:$t,repo:$r,timestamp:$ts,prism_level:2,metric:{name:"spec_to_code_hours",value:$v,unit:"count"},ai_dora:{spec_to_code_hours:$v}}')
+  add_event "prism.d1.assessment" "$D"
+
+  # Post-Merge Defect Rate
+  D=$(jq -nc --arg t "$TEAM" --arg r "$REPO" --arg ts "$TS" --argjson v "$DEFECT" \
+    '{team_id:$t,repo:$r,timestamp:$ts,prism_level:2,metric:{name:"post_merge_defect_rate",value:$v,unit:"percent"},ai_dora:{post_merge_defect_rate:$v}}')
+  add_event "prism.d1.assessment" "$D"
+
+  # PRISM Level (trending up over the week)
+  LEVEL=$(echo "scale=1; 1.5 + (7 - $DAY) * 0.2" | bc -l | sed 's/^\./0./')
+  D=$(jq -nc --arg t "$TEAM" --arg r "$REPO" --arg ts "$TS" --argjson v "$LEVEL" \
+    '{team_id:$t,repo:$r,timestamp:$ts,prism_level:2,metric:{name:"PRISMLevel",value:$v,unit:"none"}}')
+  add_event "prism.d1.assessment" "$D"
+
+  # Agent invocations
+  AGENT_COUNT=$((RANDOM % 8 + 3))
+  for a in $(seq 1 $AGENT_COUNT); do
+    STEPS=$((RANDOM % 8 + 2))
+    DUR=$((RANDOM % 5000 + 1000))
+    TOKENS=$((RANDOM % 8000 + 2000))
+    STATUS="success"
+    if [ $((RANDOM % 6)) -eq 0 ]; then STATUS="failure"; fi
+    ATS="${DATE}T$(printf '%02d' $((RANDOM % 10 + 8))):$(printf '%02d' $((RANDOM % 60))):00Z"
+
+    D=$(jq -nc --arg t "$TEAM" --arg r "$REPO" --arg ts "$ATS" \
+      --argjson steps "$STEPS" --argjson dur "$DUR" --argjson tok "$TOKENS" --arg st "$STATUS" \
+      '{team_id:$t,repo:$r,timestamp:$ts,prism_level:3,
+        metric:{name:"agent_invocation",value:1,unit:"count"},
+        ai_context:{tool:"strands-agent",model:"us.anthropic.claude-haiku-4-5-20251001-v1:0",origin:"ai-generated"},
+        agent:{agent_name:"task-assistant",steps_taken:$steps,tools_invoked:($steps - 1),
+          duration_ms:$dur,tokens_used:$tok,status:$st,guardrails_triggered:0}}')
+    add_event "prism.d1.agent" "$D"
+  done
 done
 
 flush
