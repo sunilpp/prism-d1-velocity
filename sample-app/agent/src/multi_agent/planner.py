@@ -40,7 +40,7 @@ def create_planner(mock: bool = False) -> Agent:
         kwargs["model"] = MockModel()
     else:
         kwargs["model"] = BedrockModel(
-            model_id="anthropic.claude-haiku-4-5-20251001-v1:0",
+            model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0",
             region_name="us-west-2",
         )
     return Agent(**kwargs)

@@ -20,7 +20,7 @@ class AgentConfig:
     """Configuration for the task assistant agent."""
 
     # Model
-    model_id: str = "anthropic.claude-haiku-4-5-20251001-v1:0"
+    model_id: str = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     aws_region: str = "us-west-2"
 
     # Agent identity

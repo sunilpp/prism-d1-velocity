@@ -15,7 +15,7 @@ def test_create_agent_with_custom_config():
     config = AgentConfig(
         agent_name="test-agent",
         task_api_url="http://test:8080",
-        model_id="anthropic.claude-haiku-4-5-20251001-v1:0",
+        model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0",
     )
     agent = create_agent(config=config, mock=True)
     assert agent is not None
@@ -33,7 +33,7 @@ def test_guardrail_defaults():
 def test_config_defaults():
     """Default config should have sensible values."""
     config = AgentConfig()
-    assert config.model_id == "anthropic.claude-haiku-4-5-20251001-v1:0"
+    assert config.model_id == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     assert config.agent_name == "task-assistant"
     assert config.use_mcp is True
     assert config.emit_metrics is True
