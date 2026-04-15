@@ -159,6 +159,67 @@ export class DashboardStack extends cdk.Stack {
       }),
     );
 
+    // --- Agent Metrics Row ---
+    const teamId = 'ALL';
+    const repository = 'ALL';
+
+    teamDashboard.addWidgets(
+      new cloudwatch.TextWidget({
+        markdown: '### Agent Operations',
+        width: 24,
+        height: 1,
+      }),
+    );
+
+    teamDashboard.addWidgets(
+      new cloudwatch.GraphWidget({
+        title: 'Agent Invocations',
+        left: [
+          new cloudwatch.Metric({
+            namespace: METRIC_NAMESPACE,
+            metricName: 'AgentInvocationCount',
+            dimensionsMap: { TeamId: teamId, Repository: repository },
+            statistic: 'Sum',
+            period: DEFAULT_PERIOD,
+            label: 'Invocations',
+          }),
+        ],
+        width: 8,
+        height: 6,
+      }),
+      new cloudwatch.GraphWidget({
+        title: 'Agent Success Rate',
+        left: [
+          new cloudwatch.Metric({
+            namespace: METRIC_NAMESPACE,
+            metricName: 'AgentSuccessRate',
+            dimensionsMap: { TeamId: teamId, Repository: repository },
+            statistic: 'Average',
+            period: DEFAULT_PERIOD,
+            label: 'Success Rate (%)',
+          }),
+        ],
+        width: 8,
+        height: 6,
+        leftYAxis: { min: 0, max: 100, label: 'Percent' },
+      }),
+      new cloudwatch.GraphWidget({
+        title: 'Agent Avg Duration',
+        left: [
+          new cloudwatch.Metric({
+            namespace: METRIC_NAMESPACE,
+            metricName: 'AgentDurationMs',
+            dimensionsMap: { TeamId: teamId, Repository: repository },
+            statistic: 'Average',
+            period: DEFAULT_PERIOD,
+            label: 'Duration (ms)',
+          }),
+        ],
+        width: 8,
+        height: 6,
+      }),
+    );
+
     // =======================================================
     // Dashboard 2: Executive Readout
     // =======================================================
@@ -399,6 +460,22 @@ export class DashboardStack extends cdk.Stack {
       datapointsToAlarm: 2,
       comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
       treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+    });
+
+    // Alarm: Agent success rate dropping below 80%
+    new cloudwatch.Alarm(this, 'AgentSuccessRateAlarm', {
+      metric: new cloudwatch.Metric({
+        namespace: METRIC_NAMESPACE,
+        metricName: 'AgentSuccessRate',
+        dimensionsMap: { TeamId: teamId, Repository: repository },
+        statistic: 'Average',
+        period: cdk.Duration.hours(1),
+      }),
+      threshold: 80,
+      evaluationPeriods: 3,
+      comparisonOperator: cloudwatch.ComparisonOperator.LESS_THAN_THRESHOLD,
+      alarmDescription: 'Agent success rate below 80% for 3 consecutive hours',
+      alarmName: `prism-d1-${teamId}-agent-success-rate`,
     });
 
     // -------------------------------------------------------

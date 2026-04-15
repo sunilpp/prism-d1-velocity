@@ -308,6 +308,37 @@ async function publishCloudWatchMetrics(
     }
   }
 
+  // Agent metrics
+  if ((detail as any).agent) {
+    const agent = (detail as any).agent;
+    const agentDimensions = [
+      ...sharedDimensions,
+      { Name: 'AgentName', Value: agent.agent_name ?? 'unknown' },
+    ];
+
+    const agentMetrics: Array<[string, number | null, StandardUnit]> = [
+      ['AgentInvocationCount', 1, StandardUnit.Count],
+      ['AgentStepCount', agent.steps_taken ?? null, StandardUnit.Count],
+      ['AgentDurationMs', agent.duration_ms ?? null, StandardUnit.Milliseconds],
+      ['AgentTokensUsed', agent.tokens_used ?? null, StandardUnit.Count],
+      ['AgentToolInvocationCount', agent.tools_invoked ?? null, StandardUnit.Count],
+      ['AgentGuardrailTriggerCount', agent.guardrails_triggered ?? null, StandardUnit.Count],
+      ['AgentSuccessRate', agent.status === 'success' ? 100 : 0, StandardUnit.Percent],
+    ];
+
+    for (const [name, value, unit] of agentMetrics) {
+      if (value != null) {
+        metricData.push({
+          MetricName: name,
+          Value: value,
+          Unit: unit,
+          Dimensions: agentDimensions,
+          Timestamp: new Date(detail.timestamp),
+        });
+      }
+    }
+  }
+
   if (metricData.length === 0) {
     return;
   }

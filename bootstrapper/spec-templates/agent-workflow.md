@@ -2,15 +2,30 @@
 
 > Template: `agent-workflow` | PRISM D1 Velocity
 > Recommended for: PRISM Level 3+ teams
+> Implementation: Strands Agents SDK | MCP for tools | AgentCore for deployment
 
 ## Summary
 
 _One-paragraph description of the agentic workflow — what it autonomously accomplishes, what triggers it, and what value it delivers._
 
+## Technology Stack
+
+| Component | Technology | Purpose |
+|---|---|---|
+| Agent Framework | [Strands Agents SDK](https://github.com/strands-agents/sdk-python) | Agent orchestration, tool dispatch, reasoning loops |
+| Tool Integration | [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) | Standardized tool discovery and invocation |
+| Production Runtime | [Amazon Bedrock AgentCore](https://aws.amazon.com/bedrock/agentcore/) | Managed agent hosting, memory, gateway, guardrails |
+| LLM Inference | Amazon Bedrock | Claude model access via Bedrock API |
+| Content Safety | Bedrock Guardrails | Content filtering, topic denial, PII protection |
+| Metrics Pipeline | EventBridge + DynamoDB | PRISM metric collection and storage |
+
 ## Workflow Overview
 
 - **Trigger**: `user-initiated | event-driven | scheduled | API call`
 - **Agent Model**: `anthropic.claude-sonnet-4-20250514`
+- **Agent Framework**: Strands Agents SDK
+- **Tool Integration**: MCP servers (see Tool Definitions below)
+- **Deployment Target**: Amazon Bedrock AgentCore
 - **Tool Access**: _[List tools/APIs the agent can invoke]_
 - **Guardrails**: _[List safety boundaries]_
 - **Max Steps**: _[Maximum number of tool-use iterations]_
@@ -146,11 +161,72 @@ Rules:
 - Tool implementations MUST be idempotent where possible.
 - The agent MUST NOT make irreversible changes without human approval.
 - All agent invocations MUST be auditable via the reasoning trace.
+- Tools MUST be exposed via MCP servers for discoverability and reuse across agents.
+- The agent MUST be deployable to AgentCore without code changes (configuration-driven).
 - _[Add project-specific constraints]_
+
+## Strands SDK Implementation
+
+```python
+from strands import Agent
+from strands.models.bedrock import BedrockModel
+from strands.tools.mcp import MCPClient
+from mcp import StdioServerParameters
+
+# Connect to MCP tool servers
+mcp_client = MCPClient(
+    lambda: StdioServerParameters(
+        command="node",
+        args=["path/to/mcp-server.js"],
+    )
+)
+
+model = BedrockModel(
+    model_id="anthropic.claude-sonnet-4-20250514",
+    region_name="us-east-1",
+)
+
+with mcp_client:
+    agent = Agent(
+        model=model,
+        system_prompt="You are an agent that [describe role]. ...",
+        tools=mcp_client.list_tools_sync(),
+        max_steps=15,
+    )
+    result = agent("[Task description from input]")
+```
+
+_Customize the system prompt, model, MCP server, and max_steps for your workflow._
+
+## AgentCore Deployment Configuration
+
+Deploy this agent to production using AgentCore. Configuration templates are in `agent-configs/`.
+
+| Config File | Purpose |
+|---|---|
+| `agent-configs/agentcore-runtime.json` | Runtime: handler, timeout, model, environment |
+| `agent-configs/agentcore-memory.json` | Session memory: TTL, storage, context management |
+| `agent-configs/agentcore-gateway.json` | Gateway: endpoint, auth, rate limits, MCP servers |
+| `agent-configs/guardrails-template.json` | Guardrails: content filters, denied topics, PII |
+
+Deployment steps:
+
+1. Customize each config file — replace `<PLACEHOLDER>` values.
+2. Package the agent handler as a Lambda function.
+3. Deploy via CDK or AWS CLI:
+   ```bash
+   aws bedrock-agentcore create-runtime \
+     --cli-input-json file://agent-configs/agentcore-runtime.json
+   ```
+4. Attach guardrails and configure the gateway endpoint.
+5. Validate with the agent eval workflow (`.github/workflows/prism-agent-eval.yml`).
 
 ## Dependencies
 
 - **Bedrock**: Model access for the configured `agent_model`.
+- **Strands SDK**: `strands-agents` and `strands-agents-tools` Python packages.
+- **MCP SDK**: `@modelcontextprotocol/sdk` (TypeScript) or `mcp` (Python) for tool servers.
+- **AgentCore**: AWS Bedrock AgentCore for production runtime, memory, and gateway.
 - **Tools**: _[List tool implementations and their dependencies]_
 - **Auth**: _[How the agent authenticates to tools — IAM role, service account, etc.]_
 
@@ -180,4 +256,4 @@ Bedrock Evaluation should check:
 - **Safety**: Did the agent respect all guardrails?
 - **Traceability**: Is the reasoning trace complete and coherent?
 
-Rubrics: `eval-harness/rubrics/code-quality.json`, `eval-harness/rubrics/security-compliance.json`
+Rubrics: `eval-harness/rubrics/agent-quality.json`, `eval-harness/rubrics/code-quality.json`, `eval-harness/rubrics/security-compliance.json`
