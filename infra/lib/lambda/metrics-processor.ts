@@ -186,9 +186,18 @@ async function publishCloudWatchMetrics(
     { Name: 'Repository', Value: detail.repo },
   ];
 
+  // Add AIOrigin dimension when available — enables dashboard filtering
+  // by ai-generated vs ai-assisted vs human
+  const aiOrigin = detail.ai_context?.origin;
+  const dimensionsWithOrigin = aiOrigin
+    ? [...sharedDimensions, { Name: 'AIOrigin', Value: aiOrigin }]
+    : sharedDimensions;
+
   const metricData: MetricDatum[] = [];
 
-  // Primary metric
+  // Primary metric — published with both dimension sets for flexibility:
+  // 1. With AIOrigin: allows filtering by origin type
+  // 2. Without AIOrigin: allows aggregate queries across all origins
   if (detail.metric?.value != null) {
     metricData.push({
       MetricName: detail.metric.name,
@@ -197,10 +206,20 @@ async function publishCloudWatchMetrics(
       Dimensions: sharedDimensions,
       Timestamp: new Date(detail.timestamp),
     });
+    if (aiOrigin) {
+      metricData.push({
+        MetricName: detail.metric.name,
+        Value: detail.metric.value,
+        Unit: mapUnit(detail.metric.unit),
+        Dimensions: dimensionsWithOrigin,
+        Timestamp: new Date(detail.timestamp),
+      });
+    }
   }
 
-  // DORA metrics
+  // DORA metrics — published with AIOrigin dimension when available
   if (detail.dora) {
+    const doraDims = aiOrigin ? dimensionsWithOrigin : sharedDimensions;
     if (detail.dora.deployment_frequency != null) {
       metricData.push({
         MetricName: 'DeploymentFrequency',
@@ -209,6 +228,15 @@ async function publishCloudWatchMetrics(
         Dimensions: sharedDimensions,
         Timestamp: new Date(detail.timestamp),
       });
+      if (aiOrigin) {
+        metricData.push({
+          MetricName: 'DeploymentFrequency',
+          Value: detail.dora.deployment_frequency,
+          Unit: StandardUnit.Count,
+          Dimensions: doraDims,
+          Timestamp: new Date(detail.timestamp),
+        });
+      }
     }
     if (detail.dora.lead_time_seconds != null) {
       metricData.push({
@@ -218,6 +246,15 @@ async function publishCloudWatchMetrics(
         Dimensions: sharedDimensions,
         Timestamp: new Date(detail.timestamp),
       });
+      if (aiOrigin) {
+        metricData.push({
+          MetricName: 'LeadTimeForChanges',
+          Value: detail.dora.lead_time_seconds,
+          Unit: StandardUnit.Seconds,
+          Dimensions: doraDims,
+          Timestamp: new Date(detail.timestamp),
+        });
+      }
     }
     if (detail.dora.change_failure_rate != null) {
       metricData.push({
