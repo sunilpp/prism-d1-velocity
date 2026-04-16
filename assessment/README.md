@@ -4,6 +4,8 @@
 
 This directory contains the complete customer qualification and onboarding mechanism for the D1 Velocity pillar. It answers one question: **where does this startup stand on AI-DLC maturity, and what's the fastest path to Level 3+?**
 
+**[Read the full Assessment Methodology Guide](ASSESSMENT-GUIDE.md)** — detailed documentation of how the scanner works, interview scoring rubrics, blended score formula, track routing logic, and report generation.
+
 ## Assessment Flow
 
 ```

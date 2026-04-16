@@ -58,6 +58,10 @@ npx cdk bootstrap   # First time only
 npx cdk deploy --all
 ```
 
+### Assess a Customer
+
+Run the [PRISM Assessment](assessment/README.md) to determine maturity level and onboarding track. See the [full methodology guide](assessment/ASSESSMENT-GUIDE.md) for scanner logic, interview rubrics, and scoring formulas.
+
 ### Run the Workshop
 
 Start with [Module 00: Prerequisites](workshop/00-prerequisites/README.md) and work through sequentially.
