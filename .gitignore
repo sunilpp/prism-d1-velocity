@@ -8,3 +8,7 @@ cdk.out/
 .cdk.staging/
 *.swp
 .DS_Store
+
+# Local scan/test artifacts
+assessment/reports/scan-result.json
+assessment/scanner/package-lock.json
