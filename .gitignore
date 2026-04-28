@@ -9,6 +9,9 @@ cdk.out/
 *.swp
 .DS_Store
 
+# Internal presentation materials (keep local only)
+docs/leader-guide/presentation-script.md
+
 # Local scan/test artifacts
 assessment/reports/scan-result.json
 assessment/scanner/package-lock.json
