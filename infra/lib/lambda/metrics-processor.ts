@@ -81,6 +81,7 @@ interface CostDetail {
   total_cost_usd: number;
   models_used: string[];
   developer_email: string;
+  correlation_window_minutes?: number;
 }
 
 interface QualityDetail {
@@ -89,6 +90,15 @@ interface QualityDetail {
   human_defect_rate: number;
   total_ai_commits: number;
   total_human_commits: number;
+}
+
+interface SecurityDetail {
+  alert_type: string;
+  table_name: string;
+  principal_arn: string;
+  read_count: number;
+  window_start: string;
+  window_end: string;
 }
 
 interface MetricDetail {
@@ -115,6 +125,7 @@ interface MetricDetail {
   token?: TokenDetail;
   cost?: CostDetail;
   quality?: QualityDetail;
+  security?: SecurityDetail;
 }
 
 interface EventBridgeEvent {
@@ -597,6 +608,17 @@ async function publishCloudWatchMetrics(
         Timestamp: new Date(detail.timestamp),
       },
     );
+  }
+
+  // Security / exfiltration metrics
+  if (detail.security) {
+    metricData.push({
+      MetricName: 'ExfiltrationAlertCount',
+      Value: 1,
+      Unit: StandardUnit.Count,
+      Dimensions: sharedDimensions,
+      Timestamp: new Date(detail.timestamp),
+    });
   }
 
   // Also publish all metrics WITHOUT dimensions for aggregate dashboard views.
