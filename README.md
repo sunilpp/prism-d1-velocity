@@ -8,49 +8,47 @@
 
 Part of the [PRISM Framework](../README.md) (Progressive Readiness Index for Scalable Maturity) — the D1 Velocity pillar focuses on AI-native software development lifecycle practices that are **measurable from Day 1**.
 
+## Architecture
+
+![PRISM D1 Velocity Architecture](assets/images/architecture-overview.svg)
+
 ## What This Repo Contains
 
 ### For Engineering Leaders (Top-Down Visibility)
 
-- **[Executive Readout Dashboard](docs/dashboard-executive.html)** ([spec](docs/data-architecture.md#cloudwatch-executive-readout-prism-d1-executive-readout)) — Strategic overview: PRISM level, DORA summary, AI contribution trends, security & compliance posture, cost intelligence
-- **[PRISM Level Tracker](docs/data-architecture.md#quicksight-prism-level-tracker)** (QuickSight) — Maturity progression by team, radar chart of sub-dimensions, benchmarks by funding stage
-- **[AI-DORA Analysis](docs/data-architecture.md#quicksight-ai-dora-analysis)** (QuickSight) — Deep-dive exploratory analysis across teams, repos, and AI tools with KPI trend cards
+- **[Executive Readout Dashboard](docs/dashboard-executive.html)** ([spec](docs/data-architecture.md#cloudwatch-executive-readout-prism-d1-executive-readout)) — PRISM level, DORA summary, AI contribution trends, security & compliance posture, cost intelligence
 - **[CISO Compliance Dashboard](docs/data-architecture.md#cloudwatch-ciso-compliance-prism-d1-ciso-compliance)** — Security posture, AI code risk profile, shift-left effectiveness, remediation SLA tracking
-- **Enhanced DORA metrics** with AI-specific dimensions (acceptance rate, AI-to-merge ratio, eval gate pass rate)
-- **[Executive readout templates](docs/leader-guide/executive-readout-template.md)** that connect engineering metrics to business outcomes
+- **[PRISM Level Tracker](docs/data-architecture.md#quicksight-prism-level-tracker)** (QuickSight) — Maturity progression by team, radar chart of sub-dimensions, benchmarks by funding stage
+- **[AI-DORA Analysis](docs/data-architecture.md#quicksight-ai-dora-analysis)** (QuickSight) — Deep-dive exploratory analysis across teams, repos, and AI tools
+- **Enhanced DORA metrics** with 6 AI-specific dimensions (acceptance rate, AI-to-merge ratio, eval gate pass rate, spec-to-code hours, post-merge defect rate, AI test coverage delta)
+- **[Executive readout templates](docs/leader-guide/executive-readout-template.md)** connecting engineering metrics to business outcomes
 
 ### For Engineering Teams (Bottom-Up Activation)
 
-- **[Team Velocity Dashboard](docs/dashboard-team.html)** ([spec](docs/data-architecture.md#cloudwatch-team-velocity-prism-d1-team-velocity)) — Real-time operational view: DORA metrics, eval gate quality by rubric, guardrail safety, MCP tool governance, cost per commit, AI vs human defect rates
-- **4-hour workshop** (+ extensions) with hands-on exercises using Claude Code + Bedrock
-- **Spec-driven development** templates compatible with Kiro
-- **AI agent development** — build agents with Strands SDK, MCP, and Amazon Bedrock AgentCore
-- **Bootstrapper code** — git hooks, CI workflows, eval harnesses, [AI-DLC steering files](bootstrapper/aidlc-steering/), [Security Agent setup](bootstrapper/security-agent/) ([setup guide](bootstrapper/security-agent/SETUP-GUIDE.md)), and agent configs teams inherit permanently
-- **Sample application** with task API + MCP server (with [scope-based auth](sample-app/src/mcp/auth/)) + Strands agent to practice AI-DLC patterns
+- **[Team Velocity Dashboard](docs/dashboard-team.html)** ([spec](docs/data-architecture.md#cloudwatch-team-velocity-prism-d1-team-velocity)) — Real-time DORA metrics, eval gate quality by rubric, guardrail safety, MCP tool governance, cost per commit, AI vs human defect rates, Security Agent findings
+- **4-hour workshop** (+ extensions) with hands-on exercises using Claude Code, Kiro, and Bedrock
+- **Spec-driven development** templates with [AI-DLC steering files](bootstrapper/aidlc-steering/) (adapted from [awslabs/aidlc-workflows](https://github.com/awslabs/aidlc-workflows))
+- **AI agent development** — Strands SDK, MCP with [scope-based auth](sample-app/src/mcp/auth/), Amazon Bedrock AgentCore
+- **[AWS Security Agent integration](bootstrapper/security-agent/)** — design review, code review, pen testing ([setup guide](bootstrapper/security-agent/SETUP-GUIDE.md))
+- **Bootstrapper code** — git hooks, CI workflows, eval harnesses, agent configs teams inherit on day one
+
+### For Security Leaders (Governance & Compliance)
+
+- **Bedrock Guardrails** — content filters, PII protection, denied topics with per-trigger metrics
+- **MCP Authorization** — scope-based tool access control with audit trail
+- **Eval Gates** — 5 rubrics (code-quality, API, security, agent, spec-compliance) + SECURITY-09 (Security Agent findings)
+- **KMS encryption** on all data stores, VPC isolation, exfiltration detection
+- **12 CloudWatch alarms** including security critical finding, pen test exploit, remediation SLA
 
 ## Quick Start
 
 ### Prerequisites
 
-Run the setup script to install and verify everything automatically:
-
 ```bash
 ./scripts/setup.sh
 ```
 
-Or install manually:
-
-- AWS Account with Bedrock access (Claude models enabled)
-- Node.js 20+ and npm
-- Python 3.11+ (for Strands Agent)
-- AWS CLI v2 and CDK v2 (`npm install -g aws-cdk`)
-- Claude Code CLI configured for Bedrock (`export CLAUDE_CODE_USE_BEDROCK=1`)
-- Git 2.40+, jq, GitHub CLI
-
-The setup script supports flags:
-- `--skip-aws` — skip AWS credential and Bedrock checks (for offline prep)
-- `--skip-kiro` — skip Kiro IDE check
-- `--verify-only` — only verify, don't install anything
+Or install manually: AWS Account with Bedrock access, Node.js 20+, Python 3.11+, AWS CLI v2, CDK v2, Claude Code CLI, Git 2.40+, jq, GitHub CLI.
 
 ### Deploy the Metrics Platform
 
@@ -60,6 +58,8 @@ npm install
 npx cdk bootstrap   # First time only
 npx cdk deploy --all
 ```
+
+This deploys: EventBridge bus, 8 Lambda processors, DynamoDB tables (KMS-encrypted), 5 CloudWatch dashboards, 12 alarms, Bedrock Guardrails, Security Agent AgentSpace, model pricing table, identity mapping table.
 
 ### Assess a Customer
 
@@ -83,7 +83,6 @@ python scripts/run-demo.py --mock   # Run agent demo with mock model
 ### Adopt the Bootstrapper (Post-Workshop)
 
 ```bash
-# Copy into your project
 cp -r bootstrapper/ ~/your-repo/.prism/
 cd ~/your-repo
 
@@ -92,9 +91,12 @@ cd ~/your-repo
 cp .prism/github-workflows/*.yml .github/workflows/
 cp .prism/claude-code/CLAUDE.md ./CLAUDE.md
 
-# For agent projects, also copy:
+# For agent projects:
 cp .prism/agent-configs/ ./agent-configs/
 cp .prism/claude-code/CLAUDE-agent.md ./CLAUDE-agent.md
+
+# For Security Agent:
+.prism/security-agent/setup.sh --api-url <url> --api-key <key> --team-id <team>
 
 # Configure your team ID
 echo 'PRISM_TEAM_ID=your-team-name' >> .env
@@ -111,7 +113,7 @@ echo 'PRISM_TEAM_ID=your-team-name' >> .env
 | **AI Acceptance Rate** | Git hooks + Claude Code | >= 30% | >= 55% |
 | **AI-to-Merge Ratio** | CI metadata | >= 20% | >= 45% |
 | **Spec-to-Code Turnaround** | Spec commit → PR ready | Baseline set | < 2 days |
-| **Post-Merge Defect Rate** | Bug tracker + AI origin tag | <= 1.2x human | <= 0.9x |
+| **Post-Merge Defect Rate** | Defect correlator + AI origin tag | <= 1.2x human | <= 0.9x |
 | **Eval Gate Pass Rate** | Bedrock Evaluations in CI | >= 80% | >= 95% |
 | **AI Test Coverage Delta** | Coverage tool + AI origin tag | > 15% | > 40% |
 
@@ -121,15 +123,13 @@ echo 'PRISM_TEAM_ID=your-team-name' >> .env
 |---|--------|----------|-------------|
 | 00 | [Prerequisites](workshop/00-prerequisites/) | 30 min | Environment ready, Bedrock access confirmed |
 | 01 | [AI-SDLC Foundations](workshop/01-ai-sdlc-foundations/) | 45 min | Claude Code configured, first AI-assisted commit |
-| 02 | [Agent Development](workshop/02-agent-development/) | 70 min | Strands agent + MCP server + multi-agent orchestration |
-| 03 | [Spec-Driven Development](workshop/03-spec-driven-development/) | 45 min | Kiro spec → Claude Code implementation flow |
-| 04 | [Instrumenting AI Metrics](workshop/04-instrumenting-ai-metrics/) | 45 min | Git hooks + CI emitting enhanced DORA events |
-| 05 | [Eval Gates in CI/CD](workshop/05-eval-gates-cicd/) | 45 min | Bedrock Evaluation gate blocking bad merges |
-| 06 | [Dashboards & Visibility](workshop/06-dashboards-visibility/) | 30 min | Executive + team dashboards live |
+| 02 | [Agent Development](workshop/02-agent-development/) | 70 min | Strands agent + MCP server (with auth) + multi-agent orchestration |
+| 03 | [AI-Assisted Development](workshop/03-spec-driven-development/) | 45 min | Spec-driven development with Kiro, Claude Code IDE, or Claude Code CLI |
+| 04 | [Instrumenting AI Metrics](workshop/04-instrumenting-ai-metrics/) | 45 min | Git hooks + CI emitting 18 event types to EventBridge |
+| 05 | [Eval Gates in CI/CD](workshop/05-eval-gates-cicd/) | 45 min | 5 Bedrock eval rubrics + SECURITY-09 blocking bad merges |
+| 06 | [Dashboards & Visibility](workshop/06-dashboards-visibility/) | 30 min | 5 dashboards live (Team, Executive, CISO, 2 QuickSight) |
 
-## Architecture
-
-![PRISM D1 Velocity Architecture](assets/images/architecture-overview.svg)
+Extension exercises: Security Agent design review (+10 min in Module 03), code review (+10 min in Module 05), CISO dashboard walkthrough (+5 min in Module 06).
 
 ## PRISM Maturity Levels (D1 Velocity)
 
@@ -138,26 +138,30 @@ echo 'PRISM_TEAM_ID=your-team-name' >> .env
 | L1 | Experimental | Ad hoc AI use, no metrics, no shared tooling |
 | L2 | Structured | Claude Code + Kiro adopted, acceptance rate tracked in CI |
 | L3 | Integrated | Eval gates in pipeline, AI-DORA dashboards live, spec-driven workflow |
-| L4 | Orchestrated | Multi-team platform, AI FinOps, governed agent scope |
+| L4 | Orchestrated | Multi-team platform, AI FinOps, governed agent scope, Security Agent |
 | L5 | Autonomous | Agents contributing to architecture, >20% autonomous deployments |
 
 ## AI Agent Development
 
-The repo includes a complete agent development stack for PRISM Level 3+ teams:
-
 | Component | Technology | Location |
 |-----------|-----------|----------|
 | **Agent Framework** | Strands Agents SDK (Python) | `sample-app/agent/` |
-| **Tool Integration** | Model Context Protocol (MCP) | `sample-app/src/mcp/` |
+| **Tool Integration** | Model Context Protocol (MCP) with scope-based auth | `sample-app/src/mcp/` |
 | **Production Hosting** | Amazon Bedrock AgentCore | `bootstrapper/agent-configs/` |
-| **Agent Eval** | Bedrock Evaluations | `bootstrapper/eval-harness/rubrics/agent-quality.json` |
+| **Agent Eval** | Bedrock Evaluations (5 rubrics) | `bootstrapper/eval-harness/rubrics/` |
+| **Security** | Bedrock Guardrails + MCP authorization + Security Agent | `infra/lib/constructs/` |
 | **Workshop** | Module 02: Agent Development | `workshop/02-agent-development/` |
 
-## Competitive Landscape & Roadmap
+## Documentation & Resources
 
-- **[Competitive Landscape](docs/competitive-landscape.md)** — How PRISM D1 compares to Swarmia, Jellyfish, LinearB, DX, Faros AI, and Pluralsight Flow across DORA, AI-native metrics, and platform capabilities
-- **[Community Roadmap](docs/ROADMAP.md)** — 47 prioritized backlog items across 9 phases to reach and exceed feature parity with commercial tools — open for community contributions
-- **[Data Architecture & Dashboard Guide](docs/data-architecture.md)** — Complete metrics pipeline: 8 data sources, 14 event types, 4 dashboards (with widget-by-widget guide), CloudWatch metrics catalog, and token/cost intelligence pipeline
+| Resource | Description |
+|----------|-------------|
+| **[Data Architecture & Dashboard Guide](docs/data-architecture.md)** | 9 data sources, 18 event types, 5 dashboards (widget-by-widget guide), 30+ CloudWatch metrics, 12 alarms |
+| **[Competitive Landscape](docs/competitive-landscape.md)** | PRISM vs. Swarmia, Jellyfish, LinearB, DX, Faros AI — 9 differentiators |
+| **[Community Roadmap](docs/ROADMAP.md)** | Prioritized backlog across 9 phases |
+| **[Security Agent Setup Guide](bootstrapper/security-agent/SETUP-GUIDE.md)** | 10-step guide: console setup, domain verification, GitHub connection, webhook, identity mapping |
+| **[AI-DLC Steering Files](bootstrapper/aidlc-steering/)** | Development workflow rules adapted from [awslabs/aidlc-workflows](https://github.com/awslabs/aidlc-workflows) |
+| **[ROI Model](docs/leader-guide/roi-model.md)** | Defensible ROI calculations for CFO conversations |
 
 **GitHub Pages**: [sunilpp.github.io/prism-d1-velocity](https://sunilpp.github.io/prism-d1-velocity/)
 
