@@ -144,6 +144,18 @@ export class ApiStack extends cdk.Stack {
       apiKeyRequired: true,
     });
 
+    // POST /security-findings (Security Agent webhook)
+    const securityResource = this.api.root.addResource('security-findings');
+    securityResource.addMethod('POST', lambdaIntegration, {
+      apiKeyRequired: true,
+    });
+
+    // GET /security-findings/{team_id}
+    const teamSecurityResource = securityResource.addResource('{team_id}');
+    teamSecurityResource.addMethod('GET', lambdaIntegration, {
+      apiKeyRequired: true,
+    });
+
     // -------------------------------------------------------
     // Outputs
     // -------------------------------------------------------
