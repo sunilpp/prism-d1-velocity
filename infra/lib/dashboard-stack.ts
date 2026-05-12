@@ -26,14 +26,73 @@ export class DashboardStack extends cdk.Stack {
       label: 'AI Acceptance Rate (%)',
     });
 
+    // --- Header with key single-value KPIs (sparkline-enabled) ---
     teamDashboard.addWidgets(
       new cloudwatch.TextWidget({
-        markdown: '# PRISM D1 - Team Velocity Dashboard\nReal-time AI-enhanced DORA metrics for engineering teams.',
+        markdown: '# PRISM D1 — Team Velocity\nReal-time AI-enhanced DORA metrics  |  Hover any metric\'s **(i)** for details',
         width: 24,
         height: 1,
       }),
     );
 
+    // KPI row: 4 sparkline single-value cards
+    teamDashboard.addWidgets(
+      new cloudwatch.SingleValueWidget({
+        title: 'AI Acceptance Rate',
+        metrics: [aiAcceptanceMetric],
+        width: 6,
+        height: 4,
+        sparkline: true,
+        fullPrecision: false,
+      }),
+      new cloudwatch.SingleValueWidget({
+        title: 'Deployment Frequency (7d)',
+        metrics: [
+          new cloudwatch.Metric({
+            namespace: METRIC_NAMESPACE,
+            metricName: 'DeploymentFrequency',
+            statistic: 'Sum',
+            period: cdk.Duration.days(7),
+            label: 'Deploys',
+          }),
+        ],
+        width: 6,
+        height: 4,
+        sparkline: true,
+      }),
+      new cloudwatch.SingleValueWidget({
+        title: 'Eval Gate Pass Rate',
+        metrics: [
+          new cloudwatch.Metric({
+            namespace: METRIC_NAMESPACE,
+            metricName: 'EvalGatePassRate',
+            statistic: 'Average',
+            period: cdk.Duration.days(1),
+            label: 'Pass Rate (%)',
+          }),
+        ],
+        width: 6,
+        height: 4,
+        sparkline: true,
+      }),
+      new cloudwatch.SingleValueWidget({
+        title: 'Bedrock Cost (Daily)',
+        metrics: [
+          new cloudwatch.Metric({
+            namespace: METRIC_NAMESPACE,
+            metricName: 'BedrockCostUSD',
+            statistic: 'Sum',
+            period: cdk.Duration.days(1),
+            label: 'USD',
+          }),
+        ],
+        width: 6,
+        height: 4,
+        sparkline: true,
+      }),
+    );
+
+    // Trend row with threshold annotations
     teamDashboard.addWidgets(
       new cloudwatch.GraphWidget({
         title: 'AI Acceptance Rate',
@@ -41,6 +100,10 @@ export class DashboardStack extends cdk.Stack {
         width: 12,
         height: 6,
         leftYAxis: { min: 0, max: 100, label: 'Percent' },
+        leftAnnotations: [
+          { value: 20, color: '#d13212', label: 'Alarm threshold (20%)', fill: cloudwatch.Shading.BELOW },
+          { value: 55, color: '#1d8102', label: 'L4 target (55%)' },
+        ],
         statistic: 'Average',
         period: DEFAULT_PERIOD,
       }),
@@ -126,6 +189,10 @@ export class DashboardStack extends cdk.Stack {
         width: 8,
         height: 6,
         leftYAxis: { min: 0, max: 100, label: 'Percent' },
+        leftAnnotations: [
+          { value: 20, color: '#d13212', label: 'Alarm (20%)', fill: cloudwatch.Shading.ABOVE },
+          { value: 5, color: '#1d8102', label: 'L4 target (5%)' },
+        ],
       }),
       new cloudwatch.GraphWidget({
         title: 'Mean Time to Recovery',
@@ -230,7 +297,7 @@ export class DashboardStack extends cdk.Stack {
 
     execDashboard.addWidgets(
       new cloudwatch.TextWidget({
-        markdown: '# PRISM D1 - Executive Readout\nLeadership view of AI-assisted engineering velocity and DORA performance.',
+        markdown: '# PRISM D1 — Executive Readout\n**AI Engineering Leadership View**  |  DORA + AI-DORA + Cost + Security  |  30-day rolling',
         width: 24,
         height: 1,
       }),

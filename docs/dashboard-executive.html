@@ -19,6 +19,23 @@
     .kpi-trend.down { background: var(--cs-red-100); color: var(--cs-red-600); }
     .kpi-trend.neutral { background: var(--cs-grey-100); color: var(--cs-grey-600); }
     .dash-panels.three { grid-template-columns: repeat(3, 1fr); }
+
+    /* Gradient KPI cards (inspired by Claude Code dashboard) */
+    .kpi-gradient {
+      border-radius: 12px; padding: 20px 24px; color: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15); position: relative; overflow: hidden;
+    }
+    .kpi-gradient .kpi-value { color: #fff; font-size: 40px; }
+    .kpi-gradient .kpi-label { color: rgba(255,255,255,0.85); text-transform: uppercase; }
+    .kpi-gradient .kpi-trend { background: rgba(255,255,255,0.2); color: #fff; }
+    .kpi-gradient.blue { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .kpi-gradient.green { background: linear-gradient(135deg, #11998e 0%, #1d8102 100%); }
+    .kpi-gradient.orange { background: linear-gradient(135deg, #f2994a 0%, #ec7211 100%); }
+    .kpi-gradient.purple { background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); }
+    .kpi-gradient.teal { background: linear-gradient(135deg, #0f7b82 0%, #0073bb 100%); }
+    .kpi-gradient .kpi-sparkline {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 40px; opacity: 0.3;
+    }
     .dsh-icon.red { background: var(--cs-red-100); }
     .dsh-icon.teal { background: #e6f7f7; }
     .gauge-ring { fill: none; stroke-width: 8; stroke-linecap: round; }
@@ -123,30 +140,35 @@
       </div>
 
       <div class="dash-kpis five">
-        <div class="dash-kpi">
-          <div class="kpi-value blue">12</div>
+        <div class="dash-kpi kpi-gradient blue">
+          <div class="kpi-value">12</div>
           <div class="kpi-label">Deploys / Week <span class="info-tip" data-tip="Number of production deployments in the past 7 days. Core DORA metric measuring delivery velocity. L3 target: daily deploys.">i</span></div>
           <div class="kpi-trend up">+3 vs prior week</div>
+          <svg class="kpi-sparkline" viewBox="0 0 200 40" preserveAspectRatio="none"><polyline points="0,35 25,30 50,28 75,22 100,18 125,15 150,12 175,8 200,5" stroke="white" stroke-width="2" fill="none"/></svg>
         </div>
-        <div class="dash-kpi">
-          <div class="kpi-value green">4.2<span class="kpi-unit">hrs</span></div>
+        <div class="dash-kpi kpi-gradient green">
+          <div class="kpi-value">4.2<span class="kpi-unit">hrs</span></div>
           <div class="kpi-label">Avg Lead Time <span class="info-tip" data-tip="Average time from PR creation to production deploy. Core DORA metric. Shorter = faster feedback loops. L3 target: < 1 day.">i</span></div>
           <div class="kpi-trend up">-1.8h vs prior week</div>
+          <svg class="kpi-sparkline" viewBox="0 0 200 40" preserveAspectRatio="none"><polyline points="0,5 25,8 50,12 75,15 100,20 125,25 150,28 175,32 200,35" stroke="white" stroke-width="2" fill="none"/></svg>
         </div>
-        <div class="dash-kpi">
-          <div class="kpi-value green">8.3<span class="kpi-unit">%</span></div>
+        <div class="dash-kpi kpi-gradient teal">
+          <div class="kpi-value">8.3<span class="kpi-unit">%</span></div>
           <div class="kpi-label">Change Failure Rate <span class="info-tip" data-tip="Percentage of deployments causing a rollback, hotfix, or incident. Core DORA reliability metric. Alarm triggers above 20%.">i</span></div>
           <div class="kpi-trend up">-2.1% vs prior week</div>
+          <svg class="kpi-sparkline" viewBox="0 0 200 40" preserveAspectRatio="none"><polyline points="0,8 25,10 50,15 75,12 100,18 125,22 150,28 175,30 200,35" stroke="white" stroke-width="2" fill="none"/></svg>
         </div>
-        <div class="dash-kpi">
-          <div class="kpi-value green">42<span class="kpi-unit">min</span></div>
+        <div class="dash-kpi kpi-gradient purple">
+          <div class="kpi-value">42<span class="kpi-unit">min</span></div>
           <div class="kpi-label">Avg MTTR <span class="info-tip" data-tip="Mean Time to Recovery. Average time from incident detection to resolution. Core DORA metric measuring operational resilience.">i</span></div>
           <div class="kpi-trend up">-18m vs prior week</div>
+          <svg class="kpi-sparkline" viewBox="0 0 200 40" preserveAspectRatio="none"><polyline points="0,5 25,8 50,12 75,18 100,22 125,25 150,30 175,33 200,35" stroke="white" stroke-width="2" fill="none"/></svg>
         </div>
-        <div class="dash-kpi">
-          <div class="kpi-value purple">6.4<span class="kpi-unit">hrs</span></div>
+        <div class="dash-kpi kpi-gradient orange">
+          <div class="kpi-value">6.4<span class="kpi-unit">hrs</span></div>
           <div class="kpi-label">Spec-to-Code Avg <span class="info-tip" data-tip="Average hours from spec approval to code PR merge. Measures AI impact on the full feature lifecycle. Declining trend = AI accelerating development.">i</span></div>
           <div class="kpi-trend up">-2.1h vs prior week</div>
+          <svg class="kpi-sparkline" viewBox="0 0 200 40" preserveAspectRatio="none"><polyline points="0,5 25,10 50,15 75,18 100,22 125,28 150,30 175,33 200,35" stroke="white" stroke-width="2" fill="none"/></svg>
         </div>
       </div>
 
@@ -331,25 +353,27 @@
       </div>
 
       <div class="dash-kpis four">
-        <div class="dash-kpi">
-          <div class="kpi-value purple">$2,847</div>
+        <div class="dash-kpi kpi-gradient orange">
+          <div class="kpi-value">$2,847</div>
           <div class="kpi-label">Weekly Bedrock Cost <span class="info-tip" data-tip="Total Bedrock API spend for the past 7 days across all models. Captured via CloudTrail token counts multiplied by model pricing rates.">i</span></div>
           <div class="kpi-trend up">-12% vs prior week</div>
+          <svg class="kpi-sparkline" viewBox="0 0 200 40" preserveAspectRatio="none"><polyline points="0,30 30,25 60,28 90,22 120,20 150,15 200,10" stroke="white" stroke-width="2" fill="none"/></svg>
         </div>
-        <div class="dash-kpi">
-          <div class="kpi-value blue">$0.42</div>
+        <div class="dash-kpi kpi-gradient blue">
+          <div class="kpi-value">$0.42</div>
           <div class="kpi-label">Avg Cost / Commit <span class="info-tip" data-tip="Average Bedrock cost per AI-assisted commit. Calculated by correlating token usage within a 5-minute window before each commit. Rising trend = inefficient prompting.">i</span></div>
           <div class="kpi-trend up">-$0.08 vs prior week</div>
+          <svg class="kpi-sparkline" viewBox="0 0 200 40" preserveAspectRatio="none"><polyline points="0,8 30,10 60,15 90,12 120,18 150,25 200,32" stroke="white" stroke-width="2" fill="none"/></svg>
         </div>
-        <div class="dash-kpi">
-          <div class="kpi-value green">187</div>
+        <div class="dash-kpi kpi-gradient green">
+          <div class="kpi-value">187</div>
           <div class="kpi-label">Tokens / Line Changed <span class="info-tip" data-tip="Token efficiency: total Bedrock tokens consumed divided by lines of code changed. Lower is better. Above 500 triggers an alarm indicating context bloat or excessive iteration.">i</span></div>
           <div class="kpi-trend up">Within efficient range</div>
         </div>
-        <div class="dash-kpi">
-          <div class="kpi-value green">68<span class="kpi-unit">%</span></div>
+        <div class="dash-kpi kpi-gradient purple">
+          <div class="kpi-value">68<span class="kpi-unit">%</span></div>
           <div class="kpi-label">Budget Consumed (MTD) <span class="info-tip" data-tip="Month-to-date Bedrock spend as a percentage of the monthly budget allocation. Helps finance track AI infrastructure burn rate.">i</span></div>
-          <div class="kpi-trend neutral">$8,420 / $12,400 monthly</div>
+          <div class="kpi-trend neutral" style="background:rgba(255,255,255,0.2);">$8,420 / $12,400 monthly</div>
         </div>
       </div>
 

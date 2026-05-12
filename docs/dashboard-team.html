@@ -18,6 +18,23 @@
     .kpi-trend.down { background: var(--cs-red-100); color: var(--cs-red-600); }
     .kpi-trend.neutral { background: var(--cs-grey-100); color: var(--cs-grey-600); }
     .dash-panels.three { grid-template-columns: repeat(3, 1fr); }
+
+    /* Gradient KPI cards */
+    .kpi-gradient {
+      border-radius: 12px; padding: 20px 24px; color: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15); position: relative; overflow: hidden;
+    }
+    .kpi-gradient .kpi-value { color: #fff; font-size: 40px; }
+    .kpi-gradient .kpi-label { color: rgba(255,255,255,0.85); text-transform: uppercase; }
+    .kpi-gradient .kpi-trend { background: rgba(255,255,255,0.2); color: #fff; }
+    .kpi-gradient.blue { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .kpi-gradient.green { background: linear-gradient(135deg, #11998e 0%, #1d8102 100%); }
+    .kpi-gradient.orange { background: linear-gradient(135deg, #f2994a 0%, #ec7211 100%); }
+    .kpi-gradient.purple { background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); }
+    .kpi-gradient.teal { background: linear-gradient(135deg, #0f7b82 0%, #0073bb 100%); }
+    .kpi-gradient .kpi-sparkline {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 40px; opacity: 0.3;
+    }
     .dsh-icon.red { background: var(--cs-red-100); }
     .dsh-icon.teal { background: #e6f7f7; }
     .gauge-ring { fill: none; stroke-width: 8; stroke-linecap: round; }
@@ -208,20 +225,21 @@
 
       <!-- Agent Operations -->
       <div class="dash-panels three" style="margin-top:12px;">
-        <div class="dash-kpi">
-          <div class="kpi-value blue">342</div>
+        <div class="dash-kpi kpi-gradient blue">
+          <div class="kpi-value">342</div>
           <div class="kpi-label">Agent Invocations (24h) <span class="info-tip" data-tip="Total AI agent executions in the past 24 hours. Includes all Strands SDK agents running via AgentCore. Volume signal for agentic workloads.">i</span></div>
           <div class="kpi-trend up">+18% vs yesterday</div>
+          <svg class="kpi-sparkline" viewBox="0 0 200 40" preserveAspectRatio="none"><polyline points="0,30 30,28 60,22 90,20 120,15 150,12 200,8" stroke="white" stroke-width="2" fill="none"/></svg>
         </div>
-        <div class="dash-kpi">
-          <div class="kpi-value green">94.2<span class="kpi-unit">%</span></div>
+        <div class="dash-kpi kpi-gradient green">
+          <div class="kpi-value">94.2<span class="kpi-unit">%</span></div>
           <div class="kpi-label">Agent Success Rate <span class="info-tip" data-tip="Percentage of agent invocations completing without errors. Below 80% triggers an alarm. Failures include tool call errors, guardrail blocks, and timeout exceptions.">i</span></div>
           <div class="kpi-trend up">Above 80% threshold</div>
         </div>
-        <div class="dash-kpi">
-          <div class="kpi-value purple">1,240<span class="kpi-unit">ms</span></div>
+        <div class="dash-kpi kpi-gradient purple">
+          <div class="kpi-value">1,240<span class="kpi-unit">ms</span></div>
           <div class="kpi-label">Avg Agent Duration <span class="info-tip" data-tip="Mean execution time per agent invocation in milliseconds. Includes all steps: LLM inference, tool calls, and guardrail checks. Spikes indicate complex tasks or retries.">i</span></div>
-          <div class="kpi-trend neutral">Stable</div>
+          <div class="kpi-trend neutral" style="background:rgba(255,255,255,0.2);">Stable</div>
         </div>
       </div>
     </div>
