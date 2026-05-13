@@ -1,23 +1,29 @@
 #!/usr/bin/env bash
 # PRISM D1 Velocity -- Sample Metric Data Generator
-# Generates 7 days of realistic team commit, PR, and eval data
-# and sends it to EventBridge for dashboard population.
+# Generates realistic team metric data and sends it to EventBridge.
 #
 # Usage:
-#   ./generate-sample-data.sh                          # defaults
-#   ./generate-sample-data.sh prism-d1-metrics us-west-2
-#   AWS_REGION=us-west-2 ./generate-sample-data.sh
+#   ./generate-sample-data.sh                                    # 7 days (default)
+#   ./generate-sample-data.sh prism-d1-metrics us-west-2 60     # 60 days
+#   ./generate-sample-data.sh prism-d1-metrics us-west-2 90     # 90 days (3 months)
+#
+# Arguments:
+#   $1  Event bus name (default: prism-d1-metrics)
+#   $2  AWS region (default: us-west-2)
+#   $3  Number of days to generate (default: 7)
 
 set -euo pipefail
 
 EVENT_BUS="${1:-prism-d1-metrics}"
 REGION="${2:-${AWS_REGION:-us-west-2}}"
+DAYS="${3:-7}"
 TEAM_ID="${PRISM_TEAM_ID:-demo-team}"
 
 echo "=== PRISM D1 Sample Data Generator ==="
 echo "Event bus: $EVENT_BUS"
 echo "Region:    $REGION"
 echo "Team ID:   $TEAM_ID"
+echo "Days:      $DAYS"
 echo ""
 
 # Verify AWS credentials
@@ -58,7 +64,7 @@ emit_event() {
 }
 
 # Generate 7 days of data
-for DAY_OFFSET in $(seq 7 -1 1); do
+for DAY_OFFSET in $(seq $DAYS -1 1); do
   if [[ "$OSTYPE" == "darwin"* ]]; then
     DAY_DATE=$(date -v-"${DAY_OFFSET}d" +%Y-%m-%d)
     DAY_NAME=$(date -v-"${DAY_OFFSET}d" "+%A")
@@ -255,7 +261,7 @@ done
 echo ""
 echo "Generating guardrail, MCP, cost, attribution, and security agent events..."
 
-for DAY_OFFSET in $(seq 7 -1 1); do
+for DAY_OFFSET in $(seq $DAYS -1 1); do
   if [[ "$OSTYPE" == "darwin"* ]]; then
     DAY_DATE=$(date -v-"${DAY_OFFSET}d" +%Y-%m-%d)
     DAY_NAME=$(date -v-"${DAY_OFFSET}d" "+%A")
