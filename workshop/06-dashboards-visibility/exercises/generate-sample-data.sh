@@ -46,21 +46,39 @@ AI_ORIGINS=("human" "ai-assisted" "ai-generated" "ai-assisted")  # 75% AI
 TOOLS=("claude-code" "claude-code" "kiro" "claude-code")
 
 TOTAL_EVENTS=0
+FAILED_EVENTS=0
+ENTRY_FILE=$(mktemp)
 
 emit_event() {
   local DETAIL_TYPE="$1"
   local DETAIL="$2"
 
-  aws events put-events \
-    --region "$REGION" \
-    --entries "[{
-      \"Source\": \"prism.d1.velocity\",
-      \"DetailType\": \"$DETAIL_TYPE\",
-      \"EventBusName\": \"$EVENT_BUS\",
-      \"Detail\": $(echo "$DETAIL" | jq -Rs .)
-    }]" > /dev/null 2>&1
+  # Write the entry to a temp file to avoid shell escaping issues
+  jq -n \
+    --arg source "prism.d1.velocity" \
+    --arg detailType "$DETAIL_TYPE" \
+    --arg eventBus "$EVENT_BUS" \
+    --arg detail "$DETAIL" \
+    '[{
+      "Source": $source,
+      "DetailType": $detailType,
+      "EventBusName": $eventBus,
+      "Detail": $detail
+    }]' > "$ENTRY_FILE"
 
-  ((TOTAL_EVENTS++))
+  RESULT=$(aws events put-events \
+    --region "$REGION" \
+    --entries "file://${ENTRY_FILE}" \
+    --output json 2>&1)
+
+  if echo "$RESULT" | jq -e '.FailedEntryCount == 0' > /dev/null 2>&1; then
+    ((TOTAL_EVENTS++))
+  else
+    ((FAILED_EVENTS++))
+    if [ "$FAILED_EVENTS" -le 3 ]; then
+      echo "  ERROR: $RESULT" >&2
+    fi
+  fi
 }
 
 # Generate 7 days of data
@@ -649,13 +667,25 @@ for DAY_OFFSET in $(seq $DAYS -1 1); do
   fi
 done
 
+# Cleanup
+rm -f "$ENTRY_FILE"
+
 echo ""
 echo "=== Generation Complete ==="
 echo "Total events emitted: $TOTAL_EVENTS"
+if [ "$FAILED_EVENTS" -gt 0 ]; then
+  echo "Failed events:        $FAILED_EVENTS"
+fi
 echo ""
 echo "Open CloudWatch → Dashboards:"
 echo "  • PRISM-D1-Team-Velocity      (developer view)"
 echo "  • PRISM-D1-Executive-Readout   (leadership view)"
 echo "  • PRISM-D1-CISO-Compliance     (security view)"
 echo ""
-echo "Set time range to 'Last 1 week' for the best view."
+if [ "$DAYS" -le 7 ]; then
+  echo "Set time range to 'Last 1 week' for the best view."
+elif [ "$DAYS" -le 30 ]; then
+  echo "Set time range to 'Last 1 month' for the best view."
+else
+  echo "Set time range to 'Last 3 months' for the best view."
+fi
